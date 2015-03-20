@@ -7,45 +7,59 @@ library(dsModellingClient)
 library(datashieldclient)
 
 #the variables needed for the HOP 
-myvar <- list('DIET_VEGETARIAN', 'DIET_VEGETARIAN_VERIFIED', 'AGE_YRS', 'AGE_YRS_CATEGORICAL', 'GENDER', 'EDU_HIGHEST_1', 'WORK_STATUS_CURRENT', 'SMK_CIG_CURRENT', 'ALC_CURRENT', 'PM_BMI_CATEGORIAL', 'PM_WAIST_SIZE', 'PM_SYSTOLIC_MEASURE', 'PM_DIASTOLIC_MEASURE', 'LAB_GLUC_FASTING', 'LAB_HDL', 'LAB_TRIG', 'LAB_hsCRP', 'METABSYNDR_NBR_STRICT', 'METABSYNDR_STRICT', 'METABSYNDR_NBR_MODERATE', 'METABSYNDR_MODERATE')
+myvar <- list('DIET_VEGETARIAN', 'DIET_VEGETARIAN_VERIFIED', 'AGE_YRS', 'AGE_YRS_CATEGORICAL', 'GENDER', 'EDU_HIGHEST_1', 
+              'WORK_STATUS_CURRENT', 'SMK_CIG_CURRENT', 'ALC_CURRENT', 'PM_BMI_CATEGORIAL', 'PM_WAIST_SIZE', 
+              'PM_SYSTOLIC_MEASURE', 'PM_DIASTOLIC_MEASURE', 'LAB_GLUC_FASTING', 'LAB_HDL', 'LAB_TRIG', 'LAB_hsCRP', 
+              'METABSYNDR_NBR_STRICT', 'METABSYNDR_STRICT', 'METABSYNDR_NBR_MODERATE', 'METABSYNDR_MODERATE')
 
 #load loggin information
 load("~datashield/hop/logindata.hop.rda")
 
 #only studies participating in MetS and Vegetarian diet:  finrisk, kora, lifelines, mitchelstown, cartagene
-ld<-subset(logindata,(server=="!finrisk")|(server=="kora")|(server=="lifelines")|(server=="mitchelstown")|(server=="!ncds")|(server=="!ship")|(server=="!prevend")|(server=="!chris")|(server=="!micros"))
+#finrisk and cartagene are not ready yet
+study<-c('kora','mitchelstown','lifelines')
+ld<-subset(logindata, server %in% study)
 
-
+#login to datashield and assign data to 'D'
 opals <- datashield.login(logins=ld,assign=TRUE,variables=myvar)
 
+#verify the validity of the whole dataframe 'D'
+suppressWarnings(all(ds.isValid('D')))
 
-ds.table2D(x='D$GENDER', y='D$AGE_YRS_CATEGORICAL', type="split")
-
-ds.isValid(x='D$AGE_YRS')
-ds.isValid(x='D$DIET_VEGETARIAN')
-?ds.isValid
-
-ds.summary(x='D$AGE_YRS')
-
-ds.table2D(x='D$DIET_VEGETARIAN', y='D$GENDER', type='split')
-
-ds.table2D(x='D$DIET_VEGETARIAN', y='D$WORK_STATUS_CURRENT')
-
-ds.table2D(x='D$DIET_VEGETARIAN', y='D$PM_BMI_CATEGORIAL')
-ds.table2D(x='D$DIET_VEGETARIAN', y='D$PM_BMI_CATEGORIAL', type='split')
-
-ds.meanByClass(x='D', outvar='PM_WAIST_SIZE', covar='DIET_VEGETARIAN', type='combine')
-ds.meanByClass(x='D', outvar='PM_WAIST_SIZE', covar='DIET_VEGETARIAN', type='split')
+############################################
+#   REORGANIZE DATA BY VEGETARIAN (yes/no)
+# SUBCLASS AND ASSIGN TO D_VEG_0 AND D_VEG_1
+ds.subclass('D','D_VEG','DIET_VEGETARIAN')
+ds.assign('D_VEG$DIET_VEGETARIAN.level_1','D_VEG_1')
+ds.assign('D_VEG$DIET_VEGETARIAN.level_0','D_VEG_0')
 
 
-ds.meanByClass(x='D', outvar='LAB_GLUC_FASTING', covar='DIET_VEGETARIAN')
-ds.meanByClass(x='D', outvar='LAB_HDL', covar='DIET_VEGETARIAN')
-ds.meanByClass(x='D', outvar='LAB_TRIG', covar='DIET_VEGETARIAN')
-ds.meanByClass(x='D', outvar='LAB_hsCRP', covar='DIET_VEGETARIAN')
 
-ds.glm(formula=D$DIET_VEGETARIAN~D$GENDER,family='binomial')
-ds.glm(formula=D$PM_WAIST_SIZE~D$DIET_VEGETARIAN,family='gaussian')
-ds.glm(formula=D$LAB_GLUC_FASTING~D$DIET_VEGETARIAN,family='gaussian')
+############age mean by vegetarian for each study##################
+ds.isValid('D$AGE_YRS')
+age_by_veg_split<-ds.meanByClass('D','AGE_YRS','DIET_VEGETARIAN',type='split')
+##compute the corresponding t-test using ds.glm for AGE_YRS~DIET_VEGETARIAN
+glm_age_vs_veget_split<-lapply(opals,function(op){ds.glm(D$AGE_YRS~D$DIET_VEGETARIAN,'gaussian',datasources=list(op))})
+##compute the t.test using data from D_VEG_XXX
+ttest_age_by_Veg_split<-ds.tTest('D_VEG_1$AGE_YRS','D_VEG_0$AGE_YRS',paired=F,type='split')
+pvalue_age_by_veg_split<-lapply(ttest_age_by_Veg_split,function(x){x$p.value})
+
+
+#####age mean by vegetarian for the combined valid studies############
+age_by_veg_comb<-ds.meanByClass('D','AGE_YRS','DIET_VEGETARIAN')
+age_by_veg_comb<-data.frame(age_by_veg_comb,stringsAsFactors=F)
+##compute the corresponding t-test using ds.glm for AGE_YRS~DIET_VEGETARIAN
+glm_age_vs_veget_comb<-ds.glm(D$AGE_YRS~D$DIET_VEGETARIAN,'gaussian')
+##compute the t.test using data from D_VEG_XXX
+ttest_age_by_Veg_comb<-ds.tTest('D_VEG_1$AGE_YRS','D_VEG_0$AGE_YRS',paired=F)
+pvalue_age_by_veg_comb<-as.numeric(ttest_age_by_Veg_comb$p.value)
+
+file_name<-paste0('RESULTS_ver::',Sys.Date(),'.Rdata')
+save(age_by_veg_comb,age_by_veg_split,pvalue_age_by_veg_comb,pvalue_age_by_veg_split,ttest_age_by_Veg_comb,ttest_age_by_Veg_split,file=file_name)
+
+
+
+
 
 
 datashield.logout(opals)
