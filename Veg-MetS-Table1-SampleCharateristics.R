@@ -51,10 +51,13 @@ var_cont<-list( 'AGE_YRS','PM_WAIST_SIZE','PM_SYSTOLIC_MEASURE',
 
 ####******BY STUDY: SPLIT
 #mean by veget.
+
+###preparing progress bar
 total <- length(var_cont)
 # create progress bar
 pb <- txtProgressBar(min = 0, max = total, style = 3)
 i<-1
+####start looping now
 result_cont<-NULL
 for (var in var_cont){
   
@@ -78,6 +81,7 @@ for (var in var_cont){
   setTxtProgressBar(pb, i)
   i<-i+1
 }
+#close progress bar
 close(pb)
 
 ##Saving Result object in file versioned
