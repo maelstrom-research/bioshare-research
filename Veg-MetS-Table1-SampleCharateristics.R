@@ -30,6 +30,10 @@ suppressWarnings(all(ds.isValid('D')))
 message('VALIDITY TESTING DONE')
 
 
+#Define variable to subset by
+sub_by<-'DIET_VEGETARIAN'                       #<=== may vary often 
+
+
 ######################################################
 #
 #         ******CONTINUOUS VARIABLES STATISTICS **** 

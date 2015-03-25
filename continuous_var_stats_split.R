@@ -8,8 +8,6 @@ message('\t\t*** STARTING CONTINUOUS VARIABLES SPLIT ANALYSIS ****\n')
 message('--CONTINUOUS VARIABLES SELECTED: ')
 cat(unlist(var_cont))
 
-#Define variable to subset by
-sub_by<-'DIET_VEGETARIAN'                       #<=== may vary often 
 
 ############################################
 #   REORGANIZE DATA BY VEGETARIAN (yes/no)

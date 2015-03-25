@@ -13,9 +13,6 @@ message('\t\t*** STARTING CATEGORICAL VARIABLES SPLIT ANALYSIS ****\n')
 message('--CATEGORICAL VARIABLES SELECTED: ')
 cat(unlist(var_cat))
 
-#define the variable to subset by
-sub_by<-'DIET_VEGETARIAN'                ####<========MANDATORY
-
 
 ###preparing progress bar
 total <- length(var_cat)
