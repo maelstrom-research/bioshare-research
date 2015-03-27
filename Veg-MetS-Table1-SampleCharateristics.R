@@ -18,7 +18,7 @@ load("~datashield/hop/logindata.hop.rda")
 
 #only studies participating in MetS and Vegetarian diet:  finrisk, kora, lifelines, mitchelstown, cartagene
 #finrisk and cartagene are not ready yet
-study<-c('mitchelstown','lifelines','finrisk')#('kora'
+study<-c('mitchelstown','lifelines','finrisk','kora')
 ld<-subset(logindata, server %in% study)
 
 #login to datashield and assign data to 'D'
