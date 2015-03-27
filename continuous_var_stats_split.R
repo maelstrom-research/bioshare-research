@@ -4,7 +4,7 @@
 #
 ######################################################
 
-message('\t\t*** STARTING CONTINUOUS VARIABLES SPLIT ANALYSIS ****\n')
+message('\n\t\t*** STARTING CONTINUOUS VARIABLES SPLIT ANALYSIS ****\n')
 message('--CONTINUOUS VARIABLES SELECTED: ')
 cat(unlist(var_cont))
 
@@ -32,7 +32,7 @@ total <- length(var_cont)
 pb <- txtProgressBar(min = 0, max = total, style = 3)
 i<-1
 ####start looping now
-result_cont<-NULL
+result_cont_split<-NULL
 for (var in var_cont){
   
   #compute mean by class
@@ -51,7 +51,7 @@ for (var in var_cont){
   #arranging final result
   z<-list(pvalue = pvalue_split, mean_stats = mean_split)
   w<-structure(list(z),.Names=var)
-  result_cont<-c(result_cont,w)
+  result_cont_split<-c(result_cont_split,w)
   setTxtProgressBar(pb, i)
   i<-i+1
 }
@@ -59,7 +59,7 @@ for (var in var_cont){
 close(pb)
 
 ##Saving Result object in file versioned
-result_cont_name<-paste0('RESULTS_Cont_',sub_by,'_::',Sys.Date(),'.Rdata')
-message(paste0('\n\n******\t\tSaving Results for Continous Variables in <',result_cont_name,'> file.'))
-save(result_cont,file=result_cont_name)
+result_cont_name<-paste0('RESULTS_Cont_SPLIT_',sub_by,'_',Sys.Date(),'.Rdata')
+message(paste0('\n\n******\t\tSaving Results for Continous Variables SPLIT in <',result_cont_name,'> file.'))
+save(result_cont_split,file=result_cont_name)
 
