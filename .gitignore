@@ -4,8 +4,10 @@
 *-Ex.R
 # R data files from past sessions
 *.Rdata
+.RData
 *.Rproj
 # RStudio files
 .Rproj.user/
 .Rproj.user
 core
+Veg-MetS-Table1-SampleCharateristics.R
