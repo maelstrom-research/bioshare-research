@@ -12,7 +12,7 @@ cat(unlist(var_cont_double))
 #subset by sub_by first to generate the first subset
 message(paste0('\n===> CREATING FIRST SUBSET BY ',sub_by,'\nWait please do not interrupt!...'))
 ds.subsetByClass('D',subsets='subobj',variables= sub_by)
-message(paste0('\===> FIRST SUBSET BY ',sub_by,' IS CREATED'))
+message(paste0('===> FIRST SUBSET BY ',sub_by,' IS CREATED'))
 
 #define infoname
 message('===>CREATING FRIST SUBSET OBJECTS IN SERVER SIDE...\nWait please do not interrupt!...')
@@ -46,19 +46,19 @@ result_cont_double_split<-NULL
 for(var in var_cont_double){
   
   #define formula set
-  formulaset<-sapply(subinfobj,function(x){ paste0(x,'$','PM_SYSTOLIC_MEASURE','~',x,'$',sub_double_by)})
+  formulaset<-sapply(subinfobj,function(x){ paste0(x,'$',var,'~',x,'$',sub_double_by)})
   
   ###compute mean by class doule
-  message(paste0('\n==> COMPUTING MEAN_VALUE DOUBLE SUBSET FOR ',var,'~',sub_by,'/',sub_double_by,'\nDo not interrupt!...'))
+  message(paste0('\n==> COMPUTING MEAN_VALUE DOUBLE SUBSET FOR ',var,'~',sub_by,'|',sub_double_by,'\nDo not interrupt!...'))
   #resultset
   mean_double_split<-lapply(formulaset,ds.meanByClass,type='split')
-  message(paste0('==> MEAN_VALUE FOR ',var,'~',sub_by,'_',sub_double_by,' IS OK'))
+  message(paste0('==> MEAN_VALUE FOR ',var,'~',sub_by,'|',sub_double_by,' IS OK'))
   
   #compute the t.test using data from D_VEG_XXX
-  message(paste0('\n==> COMPUTING ttest P_VALUE FOR ',var,'~',sub_by,'/',sub_double_by,'\nDo not interrupt!...'))
+  message(paste0('\n==> COMPUTING ttest P_VALUE FOR ',var,'~',sub_by,'|',sub_double_by,'\nDo not interrupt!...'))
   ttest_double_split<-lapply(formulaset,ds.tTest,type='split')
   pvalue_double_split<-lapply(ttest_double_split,function(x){lapply(x,function(y){ y$p.value})})
-  message(paste0('==>P_VALUE FOR ',var,'~',sub_by,'/',sub_double_by,' IS OK'))
+  message(paste0('==>P_VALUE FOR ',var,'~',sub_by,'|',sub_double_by,' IS OK'))
   
   #arranging final result
   z<-list(pvalue = pvalue_double_split, mean_stats = mean_double_split)
