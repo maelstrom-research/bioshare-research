@@ -18,7 +18,7 @@ load("~datashield/hop/logindata.hop.rda")
 
 #only studies participating in MetS and Vegetarian diet:  finrisk, kora, lifelines, mitchelstown, cartagene
 #finrisk and cartagene are not ready yet
-study<-c('mitchelstown','lifelines','finrisk','kora')
+study<-c('mitchelstown','lifelines','kora','finrisk')
 ld<-subset(logindata, server %in% study)
 
 #login to datashield and assign data to 'D'
@@ -39,37 +39,59 @@ sub_by<-'DIET_VEGETARIAN'                       #<=== may vary often: ALWAYS CAL
 #         ******CONTINUOUS VARIABLES STATISTICS **** 
 #
 ##########################################################################
-var_cont<-list( 'AGE_YRS','PM_WAIST_SIZE','PM_SYSTOLIC_MEASURE', 
-                'PM_DIASTOLIC_MEASURE', 'LAB_GLUC_FASTING','LAB_HDL', 'LAB_TRIG','LAB_hsCRP')
+var_cont<-list( 'AGE_YRS','PM_WAIST_SIZE')#,'PM_SYSTOLIC_MEASURE', 
+                #'PM_DIASTOLIC_MEASURE', 'LAB_GLUC_FASTING','LAB_HDL', 'LAB_TRIG','LAB_hsCRP')
+
+var_cont_subset<-list('PM_SYSTOLIC_MEASURE','PM_DIASTOLIC_MEASURE','LAB_GLUC_FASTING','LAB_HDL','LAB_TRIG','LAB_hsCRP')
 
 #################
 #STATS WITH SPLIT
 #################
-source('continuous_var_stats_split.R',echo=F,print.eval=T)
+#source('continuous_var_stats_split.R',echo=F,print.eval=T)
 
 ####################
 #STATS WITH COMBINED
 ####################
-source('continuous_var_stats_combined.R',echo=F,print.eval=T)
+#source('continuous_var_stats_combined.R',echo=F,print.eval=T)
 
-#########################################################################
+#################################################
+# STATS WITH DOUBLE SUBSET 
+
+sub_by<-'PM_BMI_CATEGORIAL'                 #<=== update first subset by: ALWAYS CALL THIS VARIABLE 
+sub_double_by<-'DIET_VEGETARIAN'             #<----VARIABLE USED AS DOUBLE SUBSET SOULD BE ONLY TWO CATEGORIES BECAUSE OF ttest
+
+var_cont_double<-list('PM_SYSTOLIC_MEASURE','PM_DIASTOLIC_MEASURE')
+                      #,'LAB_GLUC_FASTING','LAB_HDL','LAB_TRIG','LAB_hsCRP')
+
+################################
+#STATS WITH DOUBLE SUBSET SPLIT
+################################
+source('cont_double_sub_stats_split.R',echo=F,print.eval=T)
+
+##################################
+#STATS WITH DOUBLE SUBSET COMBINED
+###################################
+#source('cont_double_sub_stats_split.R',echo=F,print.eval=T)  #NOT YET IMPLEMENTED
+
+
+######################################################################################
 #
 #         ******CATEGORICAL VARIABLES STATISTICS **** 
 #
-########################################################################
+#####################################################################################
 
-var_cat<-list('AGE_YRS_CATEGORICAL','GENDER','SMK_CIG_CURRENT', 'ALC_CURRENT', 'PM_BMI_CATEGORIAL',
-              'METABSYNDR_NBR_STRICT','METABSYNDR_STRICT','METABSYNDR_NBR_MODERATE','METABSYNDR_MODERATE','EDU_HIGHEST_2') #,'WORK_STATUS_CURRENT'
+var_cat<-list('AGE_YRS_CATEGORICAL','GENDER','SMK_CIG_CURRENT')#, 'ALC_CURRENT', 'PM_BMI_CATEGORIAL',
+              #'METABSYNDR_NBR_STRICT','METABSYNDR_STRICT','METABSYNDR_NBR_MODERATE','METABSYNDR_MODERATE','EDU_HIGHEST_2') #,'WORK_STATUS_CURRENT'
 
 #################
 #STATS WITH SPLIT
 #################
-source('categorical_var_stats_split.R',echo=F,print.eval=T)
+#source('categorical_var_stats_split.R',echo=F,print.eval=T)
 
 ####################
 #STATS WITH COMBINED
 ####################
-source('categorical_var_stats_combined.R',echo=F,print.eval=T)
+#source('categorical_var_stats_combined.R',echo=F,print.eval=T)
 
 #datashield.logout(opals)
 # clean workspace 
