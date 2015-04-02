@@ -22,7 +22,7 @@ result_cat_comb<-NULL
 for(var in var_cat){
   #compute table2D
   message(paste0('\n==> COMPUTING CHI-SQUARE FOR ',var,' X ',sub_by,'\nDo not interrupt!...'))
-  chi_square_comb<-suppressWarnings(ds.table2D(x=paste0('D$',var), y=paste0('D$',sub_by)))
+  chi_square_comb<-ds.table2D(x=paste0('D$',var), y=paste0('D$',sub_by),warningMessage=F)
   message(paste0('==> COMPUTATION OF CHI-SQUARE FOR ',var,' X ',sub_by,' IS OK'))
   
   #arranging final result
