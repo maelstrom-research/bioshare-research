@@ -46,6 +46,6 @@ close(pb)
 
 ##Saving Result object in file versioned
 result_cont_name<-paste0('RESULTS_Cont_SPLIT_',sub_by,'_',Sys.Date(),'.Rdata')
-message(paste0('\n\n******\t\tSaving Results for Continous Variables SPLIT in <',result_cont_name,'> file.'))
+message(paste0('\n\n***\tSaving Results for Continuous Variables SPLIT in <',result_cont_name,'> file.'))
 save(result_cont_split,file=result_cont_name)
 

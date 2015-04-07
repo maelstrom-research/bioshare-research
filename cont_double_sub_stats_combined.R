@@ -4,11 +4,10 @@
 #
 ##########################################################
 
-message('\n\t\t*** STARTING CONTINUOUS VARIABLES DOUBLE SUBSET SPLIT ANALYSIS ****\n')
+message('\n\t\t*** STARTING CONTINUOUS VARIABLES DOUBLE SUBSET COMBINED ANALYSIS ****\n')
 message('\n\t\t===> ****PREPARING DATA FOR DOUBLE SUBSET ANALYSIS**** <====')
 message('--CONTINUOUS VARIABLES SELECTED: ')
 cat(unlist(var_cont_double))
-
 
 #subset by sub_by first to generate the first subset
 message(paste0('\n===> CREATING FIRST SUBSET BY ',sub_by2,'\nWait please do not interrupt!...'))
@@ -16,7 +15,7 @@ ds.subsetByClass('D',subsets='subobj',variables= sub_by2)
 message(paste0('===> FIRST SUBSET BY ',sub_by2,' IS CREATED'))
 
 #define infoname
-message('===>CREATING FRIST SUBSET OBJECTS IN SERVER SIDE...\nWait please do not interrupt!...')
+message('\n===>CREATING FRIST SUBSET OBJECTS IN SERVER SIDE...\nWait please do not interrupt!...')
 subinfo<-ds.names('subobj')[[length(opals)]]
 
 #####define formula sets
@@ -42,7 +41,7 @@ pb <- txtProgressBar(min = 0, max = total, style = 3)
 i<-1
 
 ####start looping now
-result_cont_double_split<-NULL
+result_cont_double_comb<-NULL
 
 for(var in var_cont_double){
   
@@ -52,19 +51,19 @@ for(var in var_cont_double){
   ###compute mean by class doule
   message(paste0('\n==> COMPUTING MEAN_VALUE DOUBLE SUBSET FOR ',var,'~',sub_by2,'|',sub_double_by,'\nDo not interrupt!...'))
   #resultset
-  mean_double_split<-lapply(formulaset,ds.meanByClass,type='split')
+  mean_double_comb<-lapply(formulaset,ds.meanByClass)
   message(paste0('==> MEAN_VALUE FOR ',var,'~',sub_by2,'|',sub_double_by,' IS OK'))
   
   #compute the t.test using data from D_VEG_XXX
   message(paste0('\n==> COMPUTING ttest P_VALUE FOR ',var,'~',sub_by2,'|',sub_double_by,'\nDo not interrupt!...'))
-  ttest_double_split<-lapply(formulaset,ds.tTest,type='split')
-  pvalue_double_split<-lapply(ttest_double_split,function(x){lapply(x,function(y){ y$p.value})})
+  ttest_double_comb<-lapply(formulaset,ds.tTest)
+  pvalue_double_comb<-lapply(ttest_double_comb,function(x){x$p.value})
   message(paste0('==>P_VALUE FOR ',var,'~',sub_by2,'|',sub_double_by,' IS OK'))
   
   #arranging final result
-  z<-list(pvalue = pvalue_double_split, mean_stats = mean_double_split)
+  z<-list(pvalue = pvalue_double_comb, mean_stats = mean_double_comb)
   w<-structure(list(z),.Names=var)
-  result_cont_double_split<-c(result_cont_double_split,w)
+  result_cont_double_comb<-c(result_cont_double_comb,w)
   setTxtProgressBar(pb, i)
   i<-i+1
 }
@@ -73,7 +72,7 @@ for(var in var_cont_double){
 close(pb)
 
 ##Saving Result object in file versioned
-result_cont_name<-paste0('RESULTS_Cont_DBL_SPLIT_',sub_by2,'-',sub_double_by,'_',Sys.Date(),'.Rdata')
-message(paste0('\n\n***\tSaving Results for Continuous Variables DOUBLE SPLIT in <',result_cont_name,'> file.'))
-save(result_cont_double_split,file=result_cont_name)
+result_cont_name<-paste0('RESULTS_Cont_DBL_COMB_',sub_by2,'-',sub_double_by,'_',Sys.Date(),'.Rdata')
+message(paste0('\n\n***\tSaving Results for Continuous Variables DOUBLE COMBINED in <',result_cont_name,'> file.'))
+save(result_cont_double_comb,file=result_cont_name)
 
