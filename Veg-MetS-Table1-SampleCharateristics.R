@@ -17,7 +17,8 @@ myvar <- list('DIET_VEGETARIAN', 'DIET_VEGETARIAN_VERIFIED', 'AGE_YRS', 'AGE_YRS
 load("~datashield/hop/logindata.hop.rda")
 
 #only studies participating in MetS and Vegetarian diet:  finrisk, kora, lifelines, mitchelstown, cartagene
-#finrisk and cartagene are not ready yet
+
+#cartagene are not ready yet
 study<-c('mitchelstown','lifelines','finrisk') #,'kora'
 ld<-subset(logindata, server %in% study)
 
@@ -39,8 +40,8 @@ sub_by<-'DIET_VEGETARIAN_VERIFIED'                       #<=== may vary often: A
 #         ******CONTINUOUS VARIABLES STATISTICS **** 
 #
 ##########################################################################
-var_cont<-list( 'AGE_YRS','PM_WAIST_SIZE','PM_SYSTOLIC_MEASURE', 
-                'PM_DIASTOLIC_MEASURE', 'LAB_GLUC_FASTING','LAB_HDL', 'LAB_TRIG','LAB_hsCRP')
+var_cont<-list( 'AGE_YRS','PM_WAIST_SIZE','PM_SYSTOLIC_MEASURE','PM_DIASTOLIC_MEASURE', 'LAB_GLUC_FASTING','LAB_HDL', 'LAB_TRIG','LAB_hsCRP')
+
 
 #################
 #STATS WITH SPLIT
@@ -52,14 +53,36 @@ source('continuous_var_stats_split.R',echo=F,print.eval=T)
 ####################
 source('continuous_var_stats_combined.R',echo=F,print.eval=T)
 
-#########################################################################
+#################################################
+# STATS WITH DOUBLE SUBSET 
+
+sub_by2<-'PM_BMI_CATEGORIAL'                 #<=== update first subset by: ALWAYS CALL THIS VARIABLE 
+sub_double_by<-sub_by             #<----VARIABLE USED AS DOUBLE SUBSET SOULD BE ONLY TWO CATEGORIES BECAUSE OF ttest
+
+var_cont_double<-list('PM_SYSTOLIC_MEASURE','PM_DIASTOLIC_MEASURE','LAB_GLUC_FASTING','LAB_HDL','LAB_TRIG','LAB_hsCRP')
+
+
+
+################################
+#STATS WITH DOUBLE SUBSET SPLIT
+################################
+source('cont_double_sub_stats_split.R',echo=F,print.eval=T)
+
+##################################
+#STATS WITH DOUBLE SUBSET COMBINED
+###################################
+source('cont_double_sub_stats_combined.R',echo=F,print.eval=T)  
+
+
+######################################################################################
 #
 #         ******CATEGORICAL VARIABLES STATISTICS **** 
 #
-########################################################################
+#####################################################################################
 
 var_cat<-list('AGE_YRS_CATEGORICAL','GENDER','SMK_CIG_CURRENT', 'ALC_CURRENT', 'PM_BMI_CATEGORIAL',
               'METABSYNDR_NBR_STRICT','METABSYNDR_STRICT','METABSYNDR_NBR_MODERATE','METABSYNDR_MODERATE', 'EDU_HIGHEST_1', 'EDU_HIGHEST_2') #,'WORK_STATUS_CURRENT'
+
 
 #################
 #STATS WITH SPLIT

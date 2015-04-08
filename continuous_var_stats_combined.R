@@ -43,7 +43,7 @@ for (var in var_cont){
 close(pb)
 
 ##Saving Result object in file versioned
-result_cont_name<-paste0('RESULTS_Cont_COMBINED_',sub_by,'_',Sys.Date(),'.Rdata')
-message(paste0('\n\n******\t\tSaving Results for Continous Variables COMBINED  in <',result_cont_name,'> file.'))
+result_cont_name<-paste0('RESULTS_Cont_COMB_',sub_by,'_',Sys.Date(),'.Rdata')
+message(paste0('\n\n***\tSaving Results for Continuous Variables COMBINED  in <',result_cont_name,'> file.'))
 save(result_cont_comb,file=result_cont_name)
 
