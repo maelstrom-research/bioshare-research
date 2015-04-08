@@ -80,6 +80,7 @@ source('cont_double_sub_stats_combined.R',echo=F,print.eval=T)
 #
 #####################################################################################
 
+
 var_cat<-list('AGE_YRS_CATEGORICAL','GENDER','SMK_CIG_CURRENT', 'ALC_CURRENT', 'PM_BMI_CATEGORIAL',
               'METABSYNDR_NBR_STRICT','METABSYNDR_STRICT','METABSYNDR_NBR_MODERATE','METABSYNDR_MODERATE', 'EDU_HIGHEST_1', 'EDU_HIGHEST_2') #,'WORK_STATUS_CURRENT'
 
