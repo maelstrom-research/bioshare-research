@@ -101,6 +101,17 @@ source('categorical_var_stats_split.R',echo=F,print.eval=T)
 ####################
 source('categorical_var_stats_combined.R',echo=F,print.eval=T)
 
+
+###################################
+#Vegetarian by BMI contigency table
+###################################
+Veg_by_BMI_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$PM_BMI_CATEGORIAL', type='split')
+
+######################################
+#Vegetarian by GENDER contigency table
+######################################
+Veg_by_GENDER_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$GENDER', type='split')
+
 #datashield.logout(opals)
 # clean workspace 
 to_rm<-ls()[-grep('^opals$',ls())]
