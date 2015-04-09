@@ -54,13 +54,19 @@ source('continuous_var_stats_split.R',echo=F,print.eval=T)
 source('continuous_var_stats_combined.R',echo=F,print.eval=T)
 
 #################################################
-# STATS WITH DOUBLE SUBSET 
+# STATS WITH DOUBLE SUBSET - BMI and MetS components
 
 sub_by2<-'PM_BMI_CATEGORIAL'                 #<=== update first subset by: ALWAYS CALL THIS VARIABLE 
 sub_double_by<-sub_by             #<----VARIABLE USED AS DOUBLE SUBSET SOULD BE ONLY TWO CATEGORIES BECAUSE OF ttest
 
 var_cont_double<-list('PM_SYSTOLIC_MEASURE','PM_DIASTOLIC_MEASURE','LAB_GLUC_FASTING','LAB_HDL','LAB_TRIG','LAB_hsCRP')
 
+
+# STATS WITH DOUBLE SUBSET - Gender and MetS components
+####sub_by2<-'GENDER'                 #<=== update first subset by: ALWAYS CALL THIS VARIABLE 
+####sub_double_by<-sub_by             #<----VARIABLE USED AS DOUBLE SUBSET SOULD BE ONLY TWO CATEGORIES BECAUSE OF ttest
+
+####var_cont_double<-list('PM_SYSTOLIC_MEASURE','PM_DIASTOLIC_MEASURE','LAB_GLUC_FASTING','LAB_HDL','LAB_TRIG','LAB_hsCRP')
 
 
 ################################
