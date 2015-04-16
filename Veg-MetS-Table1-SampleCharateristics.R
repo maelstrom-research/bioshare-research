@@ -20,6 +20,7 @@ load("~datashield/hop/logindata.hop.rda")
 
 #cartagene are not ready yet
 study<-c('mitchelstown','lifelines','finrisk') #,'kora'
+study<-c('lifelines')
 ld<-subset(logindata, server %in% study)
 
 #login to datashield and assign data to 'D'
@@ -111,6 +112,17 @@ Veg_by_BMI_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$PM_BMI_CATEG
 #Vegetarian by GENDER contigency table
 ######################################
 Veg_by_GENDER_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$GENDER', type='split')
+
+
+######################################################################################
+#
+#         ******GLM**** 
+#
+#####################################################################################
+
+metstrict_glm <- ds.glm(formula='D$METABSYNDR_STRICT~D$GENDER+D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_CIG_CURRENT+D$ALC_CURRENT+D$DIET_VEGETARIAN_VERIFIED', family='binomial')
+
+metmoderate_glm <- ds.glm(formula='D$METABSYNDR_MODERATE~D$GENDER+D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_CIG_CURRENT+D$ALC_CURRENT+D$DIET_VEGETARIAN_VERIFIED', family='binomial')
 
 #datashield.logout(opals)
 # clean workspace 
