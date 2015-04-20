@@ -107,11 +107,13 @@ source('categorical_var_stats_combined.R',echo=F,print.eval=T)
 #Vegetarian by BMI contigency table
 ###################################
 Veg_by_BMI_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$PM_BMI_CATEGORIAL', type='split')
+save(Veg_by_BMI_table,file='Veg_byBMI.RData')
 
 ######################################
 #Vegetarian by GENDER contigency table
 ######################################
 Veg_by_GENDER_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$GENDER', type='split')
+save(Veg_by_GENDER_table,file='Veg_byGender.RData')
 
 ######################################
 #Vegetarian by HO Strict contigency table
@@ -124,6 +126,8 @@ save(Veg_by_HOstr_table,file='Veg_byHOstr.RData')
 ######################################
 Veg_by_HOmod_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$HLTH_OBESE_MODERATE', type='split')
 save(Veg_by_HOmod_table,file='Veg_byHOmod.RData')
+
+
 
 ######################################################################################
 #
