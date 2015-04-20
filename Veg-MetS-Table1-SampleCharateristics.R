@@ -117,12 +117,13 @@ Veg_by_GENDER_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$GENDER', 
 #Vegetarian by HO Strict contigency table
 ######################################
 Veg_by_HOstr_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$HLTH_OBESE_STRICT', type='split')
+save(Veg_by_HOstr_table,file='Veg_byHOstr.RData')
 
 ######################################
 #Vegetarian by HO Moderate contigency table
 ######################################
 Veg_by_HOmod_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$HLTH_OBESE_MODERATE', type='split')
-
+save(Veg_by_HOmod_table,file='Veg_byHOmod.RData')
 
 ######################################################################################
 #
