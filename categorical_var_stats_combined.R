@@ -36,7 +36,8 @@ close(pb)
 
 
 ##Saving Result object in file versioned
-result_cat_name<-paste0('RESULTS_Cat_COMB_',sub_by,'_',Sys.Date(),'.Rdata')
+date<-format(Sys.Date(),'%d%b%y')
+result_cat_name<-paste0('Cat_comb_',sub_by,'_',date,'.rda')
 message(paste0('\n\n***\tSaving Results for Categorical Variables COMBINED in <',result_cat_name,'> file.'))
 save(result_cat_comb,file=result_cat_name)
 

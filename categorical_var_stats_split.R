@@ -37,7 +37,8 @@ close(pb)
 
 
 ##Saving Result object in file versioned
-result_cat_name<-paste0('RESULTS_Cat_SPLIT_',sub_by,'_',Sys.Date(),'.Rdata')
+date<-format(Sys.Date(),'%d%b%y')
+result_cat_name<-paste0('Cat_split_',sub_by,'_',date,'.rda')
 message(paste0('\n\n***\tSaving Results for Categorical Variables in <',result_cat_name,'> file.'))
 save(result_cat_split,file=result_cat_name)
 

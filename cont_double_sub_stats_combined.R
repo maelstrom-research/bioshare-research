@@ -35,7 +35,7 @@ message('===>FIRST SUBSET OBJECTS ASSIGNED IN SERVER SIDE OK')
 
 #####################################################
 ###preparing progress bar
-total <- length(var_cont)
+total <- length(var_cont_double)
 # create progress bar
 pb <- txtProgressBar(min = 0, max = total, style = 3)
 i<-1
@@ -54,7 +54,7 @@ for(var in var_cont_double){
   mean_double_comb<-lapply(formulaset,ds.meanByClass)
   message(paste0('==> MEAN_VALUE FOR ',var,'~',sub_by2,'|',sub_double_by,' IS OK'))
   
-  #compute the t.test using data from D_VEG_XXX
+  #compute the t.test 
   message(paste0('\n==> COMPUTING ttest P_VALUE FOR ',var,'~',sub_by2,'|',sub_double_by,'\nDo not interrupt!...'))
   ttest_double_comb<-lapply(formulaset,ds.tTest)
   pvalue_double_comb<-lapply(ttest_double_comb,function(x){x$p.value})
@@ -72,7 +72,8 @@ for(var in var_cont_double){
 close(pb)
 
 ##Saving Result object in file versioned
-result_cont_name<-paste0('RESULTS_Cont_DBL_COMB_',sub_by2,'-',sub_double_by,'_',Sys.Date(),'.Rdata')
+date<-format(Sys.Date(),'%d%b%y')
+result_cont_name<-paste0('Cont_dblcomb_',sub_by2,'-',sub_double_by,'_',date,'.rda')
 message(paste0('\n\n***\tSaving Results for Continuous Variables DOUBLE COMBINED in <',result_cont_name,'> file.'))
 save(result_cont_double_comb,file=result_cont_name)
 
