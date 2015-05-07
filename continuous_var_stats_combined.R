@@ -27,7 +27,7 @@ for (var in var_cont){
   res_mean<-ds.meanByClass(regformula)  #mean of var combined result
   message(paste0('==> MEAN_VALUE FOR ',var,'~',sub_by,' IS OK'))
   
-  #compute the t.test using data from D_VEG_XXX
+  #compute the t.test 
   message(paste0('\n==> COMPUTING ttest P_VALUE FOR ',var,'~',sub_by,'\nDo not interrupt!...'))
   ttest_cont<-ds.tTest(regformula,paired=F)
   message(paste0('==>P_VALUE FOR ',var,'~',sub_by,' IS OK'))
@@ -43,7 +43,8 @@ for (var in var_cont){
 close(pb)
 
 ##Saving Result object in file versioned
-result_cont_name<-paste0('RESULTS_Cont_COMB_',sub_by,'_',Sys.Date(),'.Rdata')
+date<-format(Sys.Date(),'%d%b%y')
+result_cont_name<-paste0('Cont_comb_',sub_by,'_',date,'.rda')
 message(paste0('\n\n***\tSaving Results for Continuous Variables COMBINED  in <',result_cont_name,'> file.'))
 save(result_cont_comb,file=result_cont_name)
 

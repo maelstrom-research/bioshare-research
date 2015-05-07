@@ -36,7 +36,7 @@ message('===>FIRST SUBSET OBJECTS ASSIGNED IN SERVER SIDE OK')
 
 #####################################################
 ###preparing progress bar
-total <- length(var_cont)
+total <- length(var_cont_double)
 # create progress bar
 pb <- txtProgressBar(min = 0, max = total, style = 3)
 i<-1
@@ -55,7 +55,7 @@ for(var in var_cont_double){
   mean_double_split<-lapply(formulaset,ds.meanByClass,type='split')
   message(paste0('==> MEAN_VALUE FOR ',var,'~',sub_by2,'|',sub_double_by,' IS OK'))
   
-  #compute the t.test using data from D_VEG_XXX
+  #compute the t.test 
   message(paste0('\n==> COMPUTING ttest P_VALUE FOR ',var,'~',sub_by2,'|',sub_double_by,'\nDo not interrupt!...'))
   ttest_double_split<-lapply(formulaset,ds.tTest,type='split')
   pvalue_double_split<-lapply(ttest_double_split,function(x){lapply(x,function(y){ y$p.value})})
@@ -73,7 +73,8 @@ for(var in var_cont_double){
 close(pb)
 
 ##Saving Result object in file versioned
-result_cont_name<-paste0('RESULTS_Cont_DBL_SPLIT_',sub_by2,'-',sub_double_by,'_',Sys.Date(),'.Rdata')
+date<-format(Sys.Date(),'%d%b%y')
+result_cont_name<-paste0('Cont_dblsplit_',sub_by2,'-',sub_double_by,'_',date,'.rda')
 message(paste0('\n\n***\tSaving Results for Continuous Variables DOUBLE SPLIT in <',result_cont_name,'> file.'))
 save(result_cont_double_split,file=result_cont_name)
 

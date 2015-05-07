@@ -128,11 +128,36 @@ Veg_by_HOmod_table <- ds.table2D(x='D$DIET_VEGETARIAN_VERIFIED', y='D$HLTH_OBESE
 save(Veg_by_HOmod_table,file='Veg_byHOmod.RData')
 
 
+#########################################################
+#meta_strict_syn by Age_Cat  contingency table
+#########################################################
+Met_str_by_Age<-ds.table2D(x='D$METABSYNDR_STRICT',y='D$AGE_YRS_CATEGORICAL')
+save(Met_str_by_Age,file='Met_str_by_Age.rda')
+
+#########################################################
+#meta_strict_syn by GENDER contingency table
+#########################################################
+Met_str_by_Gender<-ds.table2D(x='D$METABSYNDR_STRICT',y='D$GENDER')
+save(Met_str_by_Gender,file='Met_str_by_Gender.rda')
+
+########################################################
+#meta_mod_syn by Age_Cat  contingency table
+#########################################################
+Met_mod_by_Age<-ds.table2D(x='D$METABSYNDR_MODERATE',y='D$AGE_YRS_CATEGORICAL')
+save(Met_mod_by_Age,file='Met_mod_by_Age.rda')
+
+#########################################################
+#meta_mod_syn by GENDER contingency table
+#########################################################
+Met_mod_by_Gender<-ds.table2D(x='D$METABSYNDR_MODERATE',y='D$GENDER')
+save(Met_mod_by_Gender,file='Met_mod_by_Gender.rda')
+
+
 
 ######################################################################################
 #
 #         ******GLM**** 
-#
+#       TODO: ADD HETEROGENEITY EFFECT IN GLM
 #####################################################################################
 
 metstrict_glm <- ds.glm(formula='D$METABSYNDR_STRICT~D$GENDER+D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_CIG_CURRENT+D$ALC_CURRENT+D$DIET_VEGETARIAN_VERIFIED', family='binomial')

@@ -28,10 +28,10 @@ for (var in var_cont){
   mean_split<-ds.meanByClass(regformula,type='split')
   message(paste0('==> MEAN_VALUE FOR ',var,'~',sub_by,' IS OK'))
   
-  #compute the t.test using data from D_VEG_XXX
+  #compute the t.test
   message(paste0('\n==> COMPUTING ttest P_VALUE FOR ',var,'~',sub_by,'\nDo not interrupt!...'))
   ttest_split<-ds.tTest(regformula,paired=F,type='split')
-  pvalue_split<-lapply(ttest_split,function(x){x$p.value})
+  pvalue_split<-lapply(ttest_split,function(x){x$p.value})   
   message(paste0('==>P_VALUE FOR ',var,'~',sub_by,' IS OK'))
   
   #arranging final result
@@ -45,7 +45,8 @@ for (var in var_cont){
 close(pb)
 
 ##Saving Result object in file versioned
-result_cont_name<-paste0('RESULTS_Cont_SPLIT_',sub_by,'_',Sys.Date(),'.Rdata')
+date<-format(Sys.Date(),'%d%b%y')
+result_cont_name<-paste0('Cont_split_',sub_by,'_',date,'.rda')
 message(paste0('\n\n***\tSaving Results for Continuous Variables SPLIT in <',result_cont_name,'> file.'))
 save(result_cont_split,file=result_cont_name)
 
