@@ -160,9 +160,25 @@ save(Met_mod_by_Gender,file='Met_mod_by_Gender.rda')
 #       TODO: ADD HETEROGENEITY EFFECT IN GLM
 #####################################################################################
 
-metstrict_glm <- ds.glm(formula='D$METABSYNDR_STRICT~D$GENDER+D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_CIG_CURRENT+D$ALC_CURRENT+D$DIET_VEGETARIAN_VERIFIED', family='binomial')
+# add specific formula, family for each regression you run
+#meta_strict regression
+formula<-'D$METABSYNDR_STRICT~D$GENDER+D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_CIG_CURRENT+D$ALC_CURRENT+D$DIET_VEGETARIAN_VERIFIED'
+family<-'binomial'
+ref<-'lifelines'
+save_to<-'metstrict_glm'
+source('meta_glm.R',echo=F,print.eval=T)
 
-metmoderate_glm <- ds.glm(formula='D$METABSYNDR_MODERATE~D$GENDER+D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_CIG_CURRENT+D$ALC_CURRENT+D$DIET_VEGETARIAN_VERIFIED', family='binomial')
+#meta_moderate
+formula<-'D$METABSYNDR_MODERATE~D$GENDER+D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_CIG_CURRENT+D$ALC_CURRENT+D$DIET_VEGETARIAN_VERIFIED'
+family<-'binomial'
+ref<-'lifelines'
+save_to<-'metmoderate_glm'
+source('meta_glm.R',echo=F,print.eval=T)
+
+#metstrict_glm <- ds.glm(formula='D$METABSYNDR_STRICT~D$GENDER+D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_CIG_CURRENT+D$ALC_CURRENT+D$DIET_VEGETARIAN_VERIFIED', family='binomial')
+#metmoderate_glm <- ds.glm(formula='D$METABSYNDR_MODERATE~D$GENDER+D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_CIG_CURRENT+D$ALC_CURRENT+D$DIET_VEGETARIAN_VERIFIED', family='binomial')
+
+
 
 #datashield.logout(opals)
 # clean workspace 
