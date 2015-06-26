@@ -31,11 +31,11 @@ opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 expo <- 'NO2_ESCAPE'
 
 ####################
-#outcome <- 'SYM_WHEEZ' 
+outcome <- 'SYM_WHEEZ' 
 #outcome <- 'SYM_SBREATH'
 #outcome <- 'SYM_PHLEGM_UP'
 #outcome <- 'SYM_PHLEGM_DAY'
-outcome <- 'MEDI_ASTHMA_COPD'
+#outcome <- 'MEDI_ASTHMA_COPD'
 
 #####################
 ###model_1(age ajusted)
@@ -60,4 +60,40 @@ glm.stats<-run.extract.glm.stats(glm.res)
 
 #print glm stats
 print(glm.stats)
+
+
+####################################################################################
+#           univariate: outcome~confounding
+####################################################################################
+
+########### PART 1 #########################
+# glm for to compute ttest
+confounding1 <- list('AGE_YRS','SMK_PACKYRS','RES_LENGTH')#,GENDER,'EDU_HIGHEST_2','SMK_STATUS','DIS_ALLERG','SMK_PASSIVE_ALL'
+
+####################
+#outcome <- 'SYM_WHEEZ' 
+#outcome <- 'SYM_SBREATH'
+#outcome <- 'SYM_PHLEGM_UP'
+#outcome <- 'SYM_PHLEGM_DAY'
+outcome <- 'MEDI_ASTHMA_COPD'
+
+result<-list()
+for (conf in confounding1){
+  formula.update <- paste0('D$',conf,'~','D$',outcome)
+  
+  glm.res<-ds.glm(formula.update,family='gaussian')
+  glm.stat<-run.extract.glm.stats(glm.res)
+  glm.stat<-structure(list(glm.stat),.Names=conf)
+  result.part1<-c(result,glm.stat)
+}
+
+#print part1 stats per outcome
+print(result.part1) 
+
+################## PART 2 ####################
+### CHI-SQUARE 
+confounding2 <- list('GENDER','PM_BMI_CATEGORIAL','EDU_HIGHEST_2','SMK_STATUS','DIS_ALLERG','SMK_PASSIVE_ALL')
+result.part2 <- run.cat(outcome,confounding2)
+#print part2 p.value(s) per outcome
+lapply(result.part2,function(x){ format(x$chi2Test$pooled$p.value,digits=5)})
 
