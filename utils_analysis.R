@@ -343,6 +343,26 @@ bioshare.env$run.meta.glm<-function(formula, family,opals, ref, type = 'combine'
 }
 
 
+#################################################################
+# this can be used as an internal private function
+#function to compute the number of complete participants in a glm
+#glm.result = result of a glm run
+
+
+bioshare.env$run.num.completecases<-function(glm.result){
+  formula <-  gsub('\\s+','',formula(glm.result))
+  z <- strsplit(formula,'\\+|~')
+  df.name<-unlist(strsplit(unlist(z)[1],'$',fixed=T))[1]
+  vars.in.formula <- sapply(unlist(z),function(x) unlist(strsplit(x,'$',fixed=T))[2],USE.NAMES=F)
+  # get first new col data subset
+  ds.subset(df.name,cols=vars.in.formula,subset='dfglm')
+  #now get completecases
+  ds.subset('dfglm',completeCases=T,subset='dfglmcomplete')
+  nbr.cases <- ds.dim('dfglmcomplete')
+  data.frame(nbr.cases)[1,]
+  #nbr.cases
+}
+
 
 ##############################################
 #function to extract glm result :P_OR(p.value) 
@@ -353,16 +373,26 @@ bioshare.env$run.extract.glm.stats <- function(glm.result)
   glm.coef <- coef(glm.result)
   if('P_OR' %in% colnames(glm.coef)){
     stats <- data.frame(OR_with_pvalue = apply(glm.coef,1,function(x) {
-        paste0(round(x['P_OR'],3),'(',format(x['p-value'],digits=4),')')
+      OR <- round(x['P_OR'],3)
+      pvalue <-  pvalue<- format(x['p-value'],digits=4)
+      low <- round(x[length(x)-1],3)
+      high <- round(x[length(x)],3)
+      
+      paste0(OR,' [',low,' - ',high,'] (',pvalue,')')
      })
     )
   }else{
     stats <- data.frame(Estimate_with_pvalue = apply(glm.coef,1,function(x) {
-      paste0(round(x['Estimate'],3),'(',format(x['p-value'],digits=4),')')
+      estimate <- round(x['Estimate'],3)
+      pvalue<- format(x['p-value'],digits=4)
+      low <- round(x[length(x)-1],3)
+      high <- round(x[length(x)],3)
+      
+      paste0(estimate,' [',low,' - ',high,'] (',pvalue,')')
     })
     )
   }
-  
+  glm.coef[2,dim(glm.coef)[2]-1]
   
   list(formula = formula(glm.result), stats = stats)
 }
@@ -389,6 +419,5 @@ bioshare.env$run.close<-function(all=F)
 
 # attach bioshare env
 attach(bioshare.env)
-
 
 

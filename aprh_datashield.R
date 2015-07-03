@@ -26,27 +26,31 @@ opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 ##                         running some regressions                            ##
 #################################################################################
 
+expo <- 'PMcoarse_ESCAPE'
 #expo <- 'PM25_ESCAPE'
 #expo <- 'PM10_ESC'
-expo <- 'NO2_ESCAPE'
+#expo <- 'NO2_ESCAPE'
 
 ####################
-outcome <- 'SYM_WHEEZ' 
+#outcome <- 'SYM_WHEEZ' 
 #outcome <- 'SYM_SBREATH'
 #outcome <- 'SYM_PHLEGM_UP'
+#outcome <- 'SYM_PHLEGM_UP_FREQ'
 #outcome <- 'SYM_PHLEGM_DAY'
+#outcome <- 'SYM_PHLEGM_DAY_FREQ'
 #outcome <- 'MEDI_ASTHMA_COPD'
+
 
 #####################
 ###model_1(age ajusted)
-#formula<-'~D$AGE_YRS'
+formula<-'~D$AGE_YRS'
 
 #model_2(Ajusted for age, sex, BMI, highest level of education, and smoking status)
 #formula<-'~D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_STATUS'
 
 # model_3(Adjusted for age, sex, BMI, highest level of education, and smoking status, pack-years smoked,... 
 #...length at baseline residence, exposure to second-hand smoke, and self-declared allergies)  					
-formula <- '~D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS+D$RES_LENGTH+D$SMK_PASSIVE_ALL+D$DIS_ALLERG'
+#formula <- '~D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS+D$RES_LENGTH+D$SMK_PASSIVE_ALL'
 
 #update formula
 formula <- paste0('D$',outcome,formula,'+D$',expo)
@@ -74,17 +78,19 @@ confounding1 <- list('AGE_YRS','SMK_PACKYRS','RES_LENGTH')#,GENDER,'EDU_HIGHEST_
 #outcome <- 'SYM_WHEEZ' 
 #outcome <- 'SYM_SBREATH'
 #outcome <- 'SYM_PHLEGM_UP'
+outcome <- 'SYM_PHLEGM_UP_FREQ'
 #outcome <- 'SYM_PHLEGM_DAY'
-outcome <- 'MEDI_ASTHMA_COPD'
+#outcome <- 'SYM_PHLEGM_DAY_FREQ'
+#outcome <- 'MEDI_ASTHMA_COPD'
 
-result<-list()
+result.part1<-list()
 for (conf in confounding1){
   formula.update <- paste0('D$',conf,'~','D$',outcome)
   
   glm.res<-ds.glm(formula.update,family='gaussian')
   glm.stat<-run.extract.glm.stats(glm.res)
   glm.stat<-structure(list(glm.stat),.Names=conf)
-  result.part1<-c(result,glm.stat)
+  result.part1<-c(result.part1,glm.stat)
 }
 
 #print part1 stats per outcome
