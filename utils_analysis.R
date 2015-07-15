@@ -1,4 +1,20 @@
 bioshare.env <- new.env()
+
+############################################################################
+# utils functions
+###########################################################################
+# check if an object is defined
+bioshare.env$isDefined <- dsBaseClient:::isDefined
+#get opals login object(s) in the env
+bioshare.env$findLoginObjects <- dsBaseClient:::findLoginObjects
+#check if an object is assigned
+bioshare.env$isAssigned <- dsBaseClient:::isAssigned
+
+#########################################################################################
+#    analytics functions here below 
+########################################################################################
+
+################ categorical (table2d) for multiple variables ######################
 bioshare.env$run.cat<-function(subset=NULL,vars=NULL,type='combine',save=F, print= F)
 {
   if(missing(subset)){
@@ -141,7 +157,7 @@ bioshare.env$run.cont<-function(subset = NULL,var1=NULL, vars = NULL, type = 'co
 
 
 
-####################double subset ####################
+####################double subset ##############dsBaseClient:::findLoginObjects()######
 bioshare.env$run.dbl.cont<-function(subset1=NULL, vars = NULL, subset2 = NULL, type = 'combine', save = F, print = F)
 {
   
@@ -343,25 +359,68 @@ bioshare.env$run.meta.glm<-function(formula, family,opals, ref, type = 'combine'
 }
 
 
+
+################################################################################################
+#this function run a glm based on the model
+#param outcome = the outcome variable in character (ex: 'SYM_SBREATH')
+#param expo =  the exposition variable in character (ex: 'NO2_ESCAPE')
+#param model = the model to apply in glm, it's a truncated formula made of -->
+#-->counfounding variables (ex: '~D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_STATUS') without outcome and expo
+#param family = glm family (ex: 'gaussian' or 'binomial',...) 
+#param ...= any params that go to glm (except formula) (i.e: offset, data, weights,wiewIter, datasource)
+#param Ncases = a boolean (TRUE or FALSE(default)) wether to compute N cases or not in the final result  
+
+bioshare.env$run.model<-function(outcome = NULL,expo= NULL ,model= NULL,family,Ncases=FALSE,...)
+{
+  if(is.null(outcome)) stop('outcome is required...',call.=F)
+  if(is.null(expo)) stop('exposition variable is required...',call.=F)
+  if(is.null(model)) stop('model formula is required...',call.=F)
+  
+  #update formula
+  formula <- paste0('D$',outcome,'~',model,'+D$',expo)
+  
+  #run glm 
+  glm.res <- run.meta.glm(formula,family,opals,print=T,...)
+  
+  #extract glm stats and process result
+  glm.stats<-run.extract.glm.stats(glm.res)
+  
+  #compute N valid (complete cases)
+  if(Ncases) {
+    Nvalid <- glm.res$nsubs
+    glm.stats$Ncases = Nvalid
+  }
+  
+  glm.stats$results <- paste0(glm.stats$stats[expo,],' [N = ',glm.stats$Ncases,']')
+  
+  #print glm stats
+  cat(glm.stats$formula,'\n')
+  cat(glm.stats$results)
+}
+
+
+
+
 #################################################################
 # this can be used as an internal private function
 #function to compute the number of complete participants in a glm
 #glm.result = result of a glm run
 
 
-bioshare.env$run.num.completecases<-function(glm.result){
-  formula <-  gsub('\\s+','',formula(glm.result))
-  z <- strsplit(formula,'\\+|~')
-  df.name<-unlist(strsplit(unlist(z)[1],'$',fixed=T))[1]
-  vars.in.formula <- sapply(unlist(z),function(x) unlist(strsplit(x,'$',fixed=T))[2],USE.NAMES=F)
-  # get first new col data subset
-  ds.subset(df.name,cols=vars.in.formula,subset='dfglm')
-  #now get completecases
-  ds.subset('dfglm',completeCases=T,subset='dfglmcomplete')
-  nbr.cases <- ds.dim('dfglmcomplete')
-  data.frame(nbr.cases)[1,]
+#bioshare.env$run.num.completecases<-function(glm.result){
+#  formula <-  gsub('\\s+','',formula(glm.result))
+#  z <- strsplit(formula,'\\+|~')
+#  df.name<-unlist(strsplit(unlist(z)[1],'$',fixed=T))[1]
+#  vars.in.formula <- sapply(unlist(z),function(x) unlist(strsplit(x,'$',fixed=T))[2],USE.NAMES=F)
+#  # get first new cols data subset
+#  ds.subset(df.name,cols=vars.in.formula,subset='dfglm')
+#  #now get completecases
+#  ds.subset('dfglm',completeCases=T,subset='dfglmcomplete')
+#  nbr.cases <- ds.dim('dfglmcomplete')
+  
+#  data.frame(nbr.cases)[1,]
   #nbr.cases
-}
+#}
 
 
 ##############################################
@@ -379,7 +438,7 @@ bioshare.env$run.extract.glm.stats <- function(glm.result)
       high <- round(x[length(x)],3)
       
       paste0(OR,' [',low,' - ',high,'] (',pvalue,')')
-     })
+     }),stringsAsFactors = F
     )
   }else{
     stats <- data.frame(Estimate_with_pvalue = apply(glm.coef,1,function(x) {
@@ -389,12 +448,12 @@ bioshare.env$run.extract.glm.stats <- function(glm.result)
       high <- round(x[length(x)],3)
       
       paste0(estimate,' [',low,' - ',high,'] (',pvalue,')')
-    })
+    }),stringsAsFactors = F
     )
   }
   glm.coef[2,dim(glm.coef)[2]-1]
-  
-  list(formula = formula(glm.result), stats = stats)
+  formula <-  gsub('\\s+',' ',formula(glm.result)) #fix spaces in formula
+  list(formula = formula, stats = stats)
 }
 
 ##########################################

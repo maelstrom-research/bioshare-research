@@ -22,49 +22,6 @@ opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 
 
 ##############################################################################################################
-#################################################################################
-##                         running some regressions                            ##
-#################################################################################
-
-expo <- 'PMcoarse_ESCAPE'
-#expo <- 'PM25_ESCAPE'
-#expo <- 'PM10_ESC'
-#expo <- 'NO2_ESCAPE'
-
-####################
-#outcome <- 'SYM_WHEEZ' 
-#outcome <- 'SYM_SBREATH'
-#outcome <- 'SYM_PHLEGM_UP'
-#outcome <- 'SYM_PHLEGM_UP_FREQ'
-#outcome <- 'SYM_PHLEGM_DAY'
-#outcome <- 'SYM_PHLEGM_DAY_FREQ'
-#outcome <- 'MEDI_ASTHMA_COPD'
-
-
-#####################
-###model_1(age ajusted)
-formula<-'~D$AGE_YRS'
-
-#model_2(Ajusted for age, sex, BMI, highest level of education, and smoking status)
-#formula<-'~D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_STATUS'
-
-# model_3(Adjusted for age, sex, BMI, highest level of education, and smoking status, pack-years smoked,... 
-#...length at baseline residence, exposure to second-hand smoke, and self-declared allergies)  					
-#formula <- '~D$AGE_YRS+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS+D$RES_LENGTH+D$SMK_PASSIVE_ALL'
-
-#update formula
-formula <- paste0('D$',outcome,formula,'+D$',expo)
-
-##########################
-#run glm 
-glm.res <- run.meta.glm(formula,'binomial',opals,print=T)
-
-#extract glm stats and process result
-glm.stats<-run.extract.glm.stats(glm.res)
-
-#print glm stats
-print(glm.stats)
-
 
 ####################################################################################
 #           univariate: outcome~confounding
@@ -77,8 +34,8 @@ confounding1 <- list('AGE_YRS','SMK_PACKYRS','RES_LENGTH')#,GENDER,'EDU_HIGHEST_
 ####################
 #outcome <- 'SYM_WHEEZ' 
 #outcome <- 'SYM_SBREATH'
-#outcome <- 'SYM_PHLEGM_UP'
-outcome <- 'SYM_PHLEGM_UP_FREQ'
+outcome <- 'SYM_PHLEGM_UP'
+#outcome <- 'SYM_PHLEGM_UP_FREQ'
 #outcome <- 'SYM_PHLEGM_DAY'
 #outcome <- 'SYM_PHLEGM_DAY_FREQ'
 #outcome <- 'MEDI_ASTHMA_COPD'
@@ -101,5 +58,60 @@ print(result.part1)
 confounding2 <- list('GENDER','PM_BMI_CATEGORIAL','EDU_HIGHEST_2','SMK_STATUS','DIS_ALLERG','SMK_PASSIVE_ALL')
 result.part2 <- run.cat(outcome,confounding2)
 #print part2 p.value(s) per outcome
-lapply(result.part2,function(x){ format(x$chi2Test$pooled$p.value,digits=5)})
+lapply(result.part2,function(x){ formdatashield.assign(datasources, subset, cally)at(x$chi2Test$pooled$p.value,digits=5)})
+
+
+###################################################################################################################
+#################################################################################
+##            running some regressions :multivariate                           ##
+#################################################################################
+
+####################### define models [model1, model2, model3]
+###model_1(age ajusted)                                                                                     <-
+#model<-'D$AGE_YRS'
+
+#model_2(Ajusted for age, sex, BMI, highest level of education, and smoking status)                         <-
+#model<-'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS'
+
+# model_3(Adjusted for age, sex, BMI, highest level of education, and smoking status, pack-years smoked,...  <-
+#...length at baseline residence, exposure to second-hand smoke, and self-declared allergies)    				
+#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS+D$RES_LENGTH+D$SMK_PASSIVE_ALL'
+
+###############
+#other models to test: model2 -->->->->-> model3
+#model 2a (Ajusted for age, sex, BMI, highest level of education, and smoking status)+pack-years smoked  
+#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS'
+
+#model 2b (Ajusted for age, sex, BMI, highest level of education, and smoking status)+length at baseline residence  
+#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$RES_LENGTH'
+
+#model 2c (Ajusted for age, sex, BMI, highest level of education, and smoking status)+exposure to second-hand smoke  
+#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PASSIVE_ALL'
+
+#model 2ab (Ajusted for age, sex, BMI, highest level of education, and smoking status)+pack-years smoked and length at baseline residence  
+#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS+D$RES_LENGTH'
+
+#model 2ac (Ajusted for age, sex, BMI, highest level of education, and smoking status)+pack-years smoked and exposure to second-hand smoke   
+#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS+D$SMK_PASSIVE_ALL'
+
+#model 2bc (Ajusted for age, sex, BMI, highest level of education, and smoking status)+length at baseline residence and exposure to second-hand smoke 
+model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$RES_LENGTH+D$SMK_PASSIVE_ALL'
+
+#######################
+expo <- 'PM25_ESCAPE'
+#expo <- 'PM10_ESC'
+#expo <- 'NO2_ESCAPE'
+#expo <- 'PMcoarse_ESCAPE'
+
+####################
+#outcome <- 'SYM_WHEEZ' 
+#outcome <- 'SYM_SBREATH'
+#outcome <- 'SYM_PHLEGM_UP'
+#outcome <- 'SYM_PHLEGM_UP_FREQ'
+#outcome <- 'SYM_PHLEGM_DAY'
+#outcome <- 'SYM_PHLEGM_DAY_FREQ'
+outcome <- 'MEDI_ASTHMA_COPD'
+
+run.model(outcome,expo,model,family = 'binomial',Ncases=T)
+
 
