@@ -92,12 +92,13 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
     outcomevar<-formulasplit[1]
     explanvars<-formulasplit[2]
     
-    for (i in 1:length(ds)){
-      effect_name<-paste0(names(ds[i]),'_effect')
-      if(!grepl(ref,effect_name)){ #only for non-ref studies
-        explanvars<-paste0(effect_name,'+',explanvars)
-      }
-    }
+    effect_name <- paste0(names(opals),'_effect')
+    effect_name <- effect_name[-(which(grepl('lifelines',effect_name)))]
+    effect.vars.in.formula <- paste(effect_name,collapse='+')
+    
+    if(!is.na(explanvars)) explanvars <- paste(effect.vars.in.formula,explanvars,sep = '+')
+    else explanvars<-effect.vars.in.formula
+    
     #update formula with study effect dummies vars
     formula<-paste0(outcomevar,'~',explanvars)  
   }
@@ -107,9 +108,9 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
   message(paste0('family for glm: ',family))
   
   if(missing(...)){
-    glm.result<-ds.glm(formula=formula,family=family)
+    glm.result<-ds.glm(formula=formula,family=family,datasources=ds)
   }else{
-    glm.result<-ds.glm(formula=formula,family=family,...)
+    glm.result<-ds.glm(formula=formula,family=family,datasources=ds,...)
   }
   
   
@@ -325,15 +326,16 @@ bioshare.env$run.close<-function(all=F)
       obj<- eval(parse(text=obj))
       if (is.list(obj) && (class(obj[[1]]) == 'opal')){
         obj.opal <- obj
-        datashield.logout(obj)
+        datashield.logout(obj.opal)
+        cat(paste0( names(obj.opal),' server is disconnected...'),sep='\n')
       }
     }
   }
 
- if(as.logical(all)) rm(list=objs,envir=.GlobalEnv) 
+ if(as.logical(all)) rm(list=objs,envir=.GlobalEnv)
+ else rm(bioshare.env,pos=search())  
  detach(bioshare.env,pos=search())
- cat(paste0( names(obj.opal),' server is disconnected...\n'))
- message('bioshare environnment is now detached from memory...')  
+ cat('bioshare environnment is now detached from memory...')  
 }
 
 
