@@ -7,6 +7,9 @@ bioshare.env <- new.env()
 bioshare.env$isDefined <- dsBaseClient:::isDefined
 #get opals login object(s) in the env
 bioshare.env$findLoginObjects <- dsBaseClient:::findLoginObjects
+#check the class of an object
+bioshare.env$checkClass <- dsBaseClient:::checkClass
+
 #check if an object is assigned
 bioshare.env$isAssigned <- dsBaseClient:::isAssigned
 #extract elements and object form server side vector (e.g. D$AGE_YRS)
@@ -70,6 +73,55 @@ bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
 }
 
 
+########INTERNAL FUNCTION
+bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,dt = NULL, datasources=NULL){
+  
+  #subset by sub_by first to generate the first subset
+  if(is.null(datasources)) datasources <- findLoginObjects()
+  ds <- datasources
+  
+  #verify dt (datatable)
+  if(is.null(dt)) {message('dt(data table) is not specified ... default table "D" (if available on server side) will be used '); dt <- 'D'}
+
+  #Sanity check : subvar should always be a factor
+  subset.class <- checkClass(ds,paste0(dt,'$',subvar))
+  if(subset.class != 'factor') stop('subvar must be a categorical variable ...',call.=F)
+  
+  message(paste0('\n===> Subsetting ',dt, ' by ',subvar,'\nWait please do not interrupt!...'))
+  vars<-c(subvar,unlist(vars.list))
+  cally <- call('subsetDS',dt = dt, complt=F, rs=NULL, cs=vars)
+  datashield.assign(ds,'newdt',cally)   #new df with only the variables needed (avoid time consuming)
+  
+  cally <- call('subsetByClassDS','newdt', subvar)
+  datashield.assign(ds,'subobj',cally)
+  message(paste0('===> Subset of ',dt, ' by ',subvar,' is created'))
+  
+  #define infoname
+  message('\n===>Assigning subsetted objects on server side...\nWait please do not interrupt!...')
+  cally <- as.name('namesDS(subobj)')
+  subinfo<-datashield.aggregate(ds,cally)[[1]] #get names of subsetted object
+  
+  #define name of object to be assigned
+  subinfobj<-sapply(subinfo,function(x){  #assign new subsetted object in server and return their name
+    newname<-paste0(dt,'.',sub('\\.level_(\\d+)$','\\1',x))  #transform names
+    toassign<-paste0('subobj$',x)
+    datashield.assign(ds,newname,as.name(toassign))    ###assigned objs are in server
+    return(newname)
+  })
+  
+  #adjust name according to new objects
+  names(subinfobj)<-subinfobj
+  
+  to.rm <- c("complt","cs","dt","newdt","rs","subobj")
+  for(x in to.rm) {datashield.rm(ds,x)} #Clean space
+  
+  message(paste0('-- Object ',subinfobj ,' is assigned',collapse='\n'))
+  return(invisible(subinfobj))
+}
+
+
+#########################################################################################################
+########################################### MODELING UTILS ##############################################
 
 ####################GLM
 bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, print = T,...)
@@ -325,6 +377,7 @@ bioshare.env$run.close<-function(all=F)
     for(obj in objs){
       obj<- eval(parse(text=obj))
       if (is.list(obj) && (class(obj[[1]]) == 'opal')){
+        message('Closing opal(s) server connection(s)')
         obj.opal <- obj
         datashield.logout(obj.opal)
         cat(paste0( names(obj.opal),' server is disconnected...'),sep='\n')
