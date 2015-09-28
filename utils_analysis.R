@@ -17,6 +17,8 @@ bioshare.env$extract <- dsBaseClient:::extract
 #pooled mean
 bioshare.env$run.pooled.mean<- dsBaseClient:::getPooledMean
 
+
+
 #########################################################################################
 #    analytics functions here below 
 ########################################################################################
@@ -313,25 +315,36 @@ bioshare.env$run.NA.stats<-function(var,iscat=F,datasource = NULL)
   if(as.logical(iscat)) {
     tocall <- paste0('table1dDS(',var,')')
     rs <- datashield.aggregate(ds,as.name(tocall))
-    rs<-t(as.matrix(rs[[1]]$table))
-    rn<-paste0(rownames(rs),':')
-    res<-as.matrix(paste0(rs,"(",round((rs/rs[nrow(rs)])*100,2),') [N = ',rs[nrow(rs)],']'))
-    res <- data.frame(res,row.names=rn)
+    
+    res <- lapply(rs,function(x){
+      rsi<-t(as.matrix(x$table))    
+      rni<-paste0(rownames(rsi),':')
+      stats<-as.matrix(paste0(rsi,"(",round((rsi/rsi[nrow(rsi)])*100,2),') [N = ',rsi[nrow(rsi)],']'))
+      data.frame(stats,row.names=rni)
+    })
+     
    
   }else{
+    
+    .vectorize <- function(x,subscript) {sapply(x,'[[',subscript)}
+    
     #tocall <- paste0('quantileMeanDS(',var,')')
     tocallmean <- paste0('meanDS(',var,')')
     tocallength <- paste0('length(',var,')')
     tocallnumna<-paste0('numNaDS(',var,')')
     tocallvar <- paste0('varDS(',var,')')
-    rs.mean <- datashield.aggregate(ds,as.name(tocallmean))[[1]]
-    rs.numna<-datashield.aggregate(ds,as.name(tocallnumna))[[1]]
-    rs.length<-datashield.aggregate(ds,as.name(tocallength))[[1]]
-    rs.var<- datashield.aggregate(ds,as.name(tocallvar))[[1]]
+    rs.mean <- .vectorize(datashield.aggregate(ds,as.name(tocallmean)),1); 
+    rs.numna <- .vectorize(datashield.aggregate(ds,as.name(tocallnumna)),1)
+    rs.length <- .vectorize(datashield.aggregate(ds,as.name(tocallength)),1)
+    rs.var <- .vectorize(datashield.aggregate(ds,as.name(tocallvar)),1)
+      
     validN<-rs.length - rs.numna  
     sd<-round(sqrt(rs.var),2)
     rs.mean <- round(rs.mean,2)
     res <- paste0(rs.mean,'(',sd,') [N = ',validN,']')
+    meanSd.stats <- as.matrix(res)
+    res <- data.frame(meanSd.stats,row.names=names(ds))
+    
   }  
   
   res
