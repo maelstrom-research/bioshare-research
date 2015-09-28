@@ -147,7 +147,7 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
     explanvars<-formulasplit[2]
     
     effect_name <- paste0(names(opals),'_effect')
-    effect_name <- effect_name[-(which(grepl('lifelines',effect_name)))]
+    effect_name <- effect_name[-(which(grepl(ref,effect_name)))]
     effect.vars.in.formula <- paste(effect_name,collapse='+')
     
     if(!is.na(explanvars)) explanvars <- paste(effect.vars.in.formula,explanvars,sep = '+')
