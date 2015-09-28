@@ -206,7 +206,7 @@ bioshare.env$run.model<-function(outcome,expo,model,family,Ncases=FALSE,...)
   formula <- paste0('D$',outcome,'~',model,'+D$',expo)
   
   #run glm 
-  glm.res <- run.meta.glm(formula,family,opals,print=T,...)
+  glm.res <- run.meta.glm(formula,family,print=T,...)
   
   #extract glm stats and process result
   glm.stats<-run.extract.glm.stats(glm.res)
