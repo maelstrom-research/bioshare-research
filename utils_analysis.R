@@ -7,12 +7,17 @@ bioshare.env <- new.env()
 bioshare.env$isDefined <- dsBaseClient:::isDefined
 #get opals login object(s) in the env
 bioshare.env$findLoginObjects <- dsBaseClient:::findLoginObjects
+#check the class of an object
+bioshare.env$checkClass <- dsBaseClient:::checkClass
+
 #check if an object is assigned
 bioshare.env$isAssigned <- dsBaseClient:::isAssigned
 #extract elements and object form server side vector (e.g. D$AGE_YRS)
 bioshare.env$extract <- dsBaseClient:::extract
 #pooled mean
 bioshare.env$run.pooled.mean<- dsBaseClient:::getPooledMean
+
+
 
 #########################################################################################
 #    analytics functions here below 
@@ -70,6 +75,55 @@ bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
 }
 
 
+########INTERNAL FUNCTION
+bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,dt = NULL, datasources=NULL){
+  
+  #subset by sub_by first to generate the first subset
+  if(is.null(datasources)) datasources <- findLoginObjects()
+  ds <- datasources
+  
+  #verify dt (datatable)
+  if(is.null(dt)) {message('dt(data table) is not specified ... default table "D" (if available on server side) will be used '); dt <- 'D'}
+
+  #Sanity check : subvar should always be a factor
+  subset.class <- checkClass(ds,paste0(dt,'$',subvar))
+  if(subset.class != 'factor') stop('subvar must be a categorical variable ...',call.=F)
+  
+  message(paste0('\n===> Subsetting ',dt, ' by ',subvar,'\nWait please do not interrupt!...'))
+  vars<-c(subvar,unlist(vars.list))
+  cally <- call('subsetDS',dt = dt, complt=F, rs=NULL, cs=vars)
+  datashield.assign(ds,'newdt',cally)   #new df with only the variables needed (avoid time consuming)
+  
+  cally <- call('subsetByClassDS','newdt', subvar)
+  datashield.assign(ds,'subobj',cally)
+  message(paste0('===> Subset of ',dt, ' by ',subvar,' is created'))
+  
+  #define infoname
+  message('\n===>Assigning subsetted objects on server side...\nWait please do not interrupt!...')
+  cally <- as.name('namesDS(subobj)')
+  subinfo<-datashield.aggregate(ds,cally)[[1]] #get names of subsetted object
+  
+  #define name of object to be assigned
+  subinfobj<-sapply(subinfo,function(x){  #assign new subsetted object in server and return their name
+    newname<-paste0(dt,'.',sub('\\.level_(\\d+)$','\\1',x))  #transform names
+    toassign<-paste0('subobj$',x)
+    datashield.assign(ds,newname,as.name(toassign))    ###assigned objs are in server
+    return(newname)
+  })
+  
+  #adjust name according to new objects
+  names(subinfobj)<-subinfobj
+  
+  to.rm <- c("complt","cs","dt","newdt","rs","subobj")
+  for(x in to.rm) {datashield.rm(ds,x)} #Clean space
+  
+  message(paste0('-- Object ',subinfobj ,' is assigned',collapse='\n'))
+  return(invisible(subinfobj))
+}
+
+
+#########################################################################################################
+########################################### MODELING UTILS ##############################################
 
 ####################GLM
 bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, print = T,...)
@@ -92,12 +146,13 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
     outcomevar<-formulasplit[1]
     explanvars<-formulasplit[2]
     
-    for (i in 1:length(ds)){
-      effect_name<-paste0(names(ds[i]),'_effect')
-      if(!grepl(ref,effect_name)){ #only for non-ref studies
-        explanvars<-paste0(effect_name,'+',explanvars)
-      }
-    }
+    effect_name <- paste0(names(opals),'_effect')
+    effect_name <- effect_name[-(which(grepl(ref,effect_name)))]
+    effect.vars.in.formula <- paste(effect_name,collapse='+')
+    
+    if(!is.na(explanvars)) explanvars <- paste(effect.vars.in.formula,explanvars,sep = '+')
+    else explanvars<-effect.vars.in.formula
+    
     #update formula with study effect dummies vars
     formula<-paste0(outcomevar,'~',explanvars)  
   }
@@ -107,9 +162,9 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
   message(paste0('family for glm: ',family))
   
   if(missing(...)){
-    glm.result<-ds.glm(formula=formula,family=family)
+    glm.result<-ds.glm(formula=formula,family=family,datasources=ds)
   }else{
-    glm.result<-ds.glm(formula=formula,family=family,...)
+    glm.result<-ds.glm(formula=formula,family=family,datasources=ds,...)
   }
   
   
@@ -153,7 +208,7 @@ bioshare.env$run.model<-function(outcome,expo,model,family,Ncases=FALSE,...)
   formula <- paste0('D$',outcome,'~',model,'+D$',expo)
   
   #run glm 
-  glm.res <- run.meta.glm(formula,family,opals,print=T,...)
+  glm.res <- run.meta.glm(formula,family,print=T,...)
   
   #extract glm stats and process result
   glm.stats<-run.extract.glm.stats(glm.res)
@@ -260,25 +315,36 @@ bioshare.env$run.NA.stats<-function(var,iscat=F,datasource = NULL)
   if(as.logical(iscat)) {
     tocall <- paste0('table1dDS(',var,')')
     rs <- datashield.aggregate(ds,as.name(tocall))
-    rs<-t(as.matrix(rs[[1]]$table))
-    rn<-paste0(rownames(rs),':')
-    res<-as.matrix(paste0(rs,"(",round((rs/rs[nrow(rs)])*100,2),') [N = ',rs[nrow(rs)],']'))
-    res <- data.frame(res,row.names=rn)
+    
+    res <- lapply(rs,function(x){
+      rsi<-t(as.matrix(x$table))    
+      rni<-paste0(rownames(rsi),':')
+      stats<-as.matrix(paste0(rsi,"(",round((rsi/rsi[nrow(rsi)])*100,2),') [N = ',rsi[nrow(rsi)],']'))
+      data.frame(stats,row.names=rni)
+    })
+     
    
   }else{
+    
+    .vectorize <- function(x,subscript) {sapply(x,'[[',subscript)}
+    
     #tocall <- paste0('quantileMeanDS(',var,')')
     tocallmean <- paste0('meanDS(',var,')')
     tocallength <- paste0('length(',var,')')
     tocallnumna<-paste0('numNaDS(',var,')')
     tocallvar <- paste0('varDS(',var,')')
-    rs.mean <- datashield.aggregate(ds,as.name(tocallmean))[[1]]
-    rs.numna<-datashield.aggregate(ds,as.name(tocallnumna))[[1]]
-    rs.length<-datashield.aggregate(ds,as.name(tocallength))[[1]]
-    rs.var<- datashield.aggregate(ds,as.name(tocallvar))[[1]]
+    rs.mean <- .vectorize(datashield.aggregate(ds,as.name(tocallmean)),1); 
+    rs.numna <- .vectorize(datashield.aggregate(ds,as.name(tocallnumna)),1)
+    rs.length <- .vectorize(datashield.aggregate(ds,as.name(tocallength)),1)
+    rs.var <- .vectorize(datashield.aggregate(ds,as.name(tocallvar)),1)
+      
     validN<-rs.length - rs.numna  
     sd<-round(sqrt(rs.var),2)
     rs.mean <- round(rs.mean,2)
     res <- paste0(rs.mean,'(',sd,') [N = ',validN,']')
+    meanSd.stats <- as.matrix(res)
+    res <- data.frame(meanSd.stats,row.names=names(ds))
+    
   }  
   
   res
@@ -324,16 +390,18 @@ bioshare.env$run.close<-function(all=F)
     for(obj in objs){
       obj<- eval(parse(text=obj))
       if (is.list(obj) && (class(obj[[1]]) == 'opal')){
+        message('Closing opal(s) server connection(s)')
         obj.opal <- obj
-        datashield.logout(obj)
+        datashield.logout(obj.opal)
+        cat(paste0( names(obj.opal),' server is disconnected...'),sep='\n')
       }
     }
   }
 
- if(as.logical(all)) rm(list=objs,envir=.GlobalEnv) 
+ if(as.logical(all)) rm(list=objs,envir=.GlobalEnv)
+ else rm(bioshare.env,pos=search())  
  detach(bioshare.env,pos=search())
- cat(paste0( names(obj.opal),' server is disconnected...\n'))
- message('bioshare environnment is now detached from memory...')  
+ cat('bioshare environnment is now detached from memory...')  
 }
 
 
