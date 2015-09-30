@@ -90,7 +90,7 @@ bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,dt = NULL, da
   if(subset.class != 'factor') stop('subvar must be a categorical variable ...',call.=F)
   
   message(paste0('\n===> Subsetting ',dt, ' by ',subvar,'\nWait please do not interrupt!...'))
-  vars<-c(subvar,unlist(vars.list))
+  vars<-unique(c(subvar,unlist(vars.list)))
   cally <- call('subsetDS',dt = dt, complt=F, rs=NULL, cs=vars)
   datashield.assign(ds,'newdt',cally)   #new df with only the variables needed (avoid time consuming)
   
@@ -188,6 +188,29 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
 
 
 
+
+
+####################################################################################
+#this function create a formula according to the model, outcome and exposition vars
+
+bioshare.env$run.update.formula<-function(outcome,expo,model,dt)
+{
+  mf <- match.call(expand.dots = FALSE)
+  arg.call <- names(mf)[-1]
+  arg.names<-c('outcome','expo','model','dt')
+  missing.arg<-which(!arg.names %in% arg.call)
+  missing.call <- paste(arg.names[missing.arg],collapse=' and ')
+  if(length(missing.arg)>1) stop(paste0(missing.call,' are required'),call.=F)
+  else if (length(missing.arg)==1) stop(paste0(missing.call,' is required'),call.=F)
+  
+  fm <-  paste0(dt,'$',outcome,'~',dt,'$',model,'+',expo)
+  fm <- gsub('+',paste0('+',dt,'$'),fm,fixed=T)
+  fm <- gsub('*',paste0('*',dt,'$'),fm,fixed=T)  
+  fm
+}
+
+
+
 ################################################################################################
 #this function run a glm based on the model
 #param outcome = the outcome variable in character (ex: 'SYM_SBREATH')
@@ -198,14 +221,16 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
 #param ...= any params that go to glm (except formula) (i.e: offset, data, weights,wiewIter, datasource)
 #param Ncases = a boolean (TRUE or FALSE(default)) wether to compute N cases or not in the final result  
 
-bioshare.env$run.model<-function(outcome,expo,model,family,Ncases=FALSE,...)
+bioshare.env$run.model<-function(outcome,expo,model,family,dt,Ncases=FALSE,...)
 {
   if(missing(outcome)) stop('outcome is required...',call.=F)
   if(missing(expo)) stop('exposition variable is required...',call.=F)
   if(missing(model)) stop('model formula is required...',call.=F)
+  #verify dt (datatable)
+  if(missing(dt)) stop('dt(datatable) is mandatory',call.=F)
   
   #update formula
-  formula <- paste0('D$',outcome,'~',model,'+D$',expo)
+  formula <- run.update.formula(outcome,expo,model,dt)
   
   #run glm 
   glm.res <- run.meta.glm(formula,family,print=T,...)
