@@ -146,7 +146,8 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
     outcomevar<-formulasplit[1]
     explanvars<-formulasplit[2]
     
-    effect_name <- paste0(names(opals),'_effect')
+    dt <- extract(outcomevar)$holders
+    effect_name <- paste0(dt,'.',names(ds))
     effect_name <- effect_name[-(which(grepl(ref,effect_name)))]
     effect.vars.in.formula <- paste(effect_name,collapse='+')
     
@@ -185,9 +186,6 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
   }
   
 }
-
-
-
 
 
 ####################################################################################
@@ -369,22 +367,22 @@ bioshare.env$run.NA.stats<-function(var,iscat=F,datasource = NULL)
     res <- paste0(rs.mean,'(',sd,') [N = ',validN,']')
     meanSd.stats <- as.matrix(res)
     res <- data.frame(meanSd.stats,row.names=names(ds))
-    
-  }  
-  
+  }   
   res
 }
 
 
 #################### create dummy study effect vars #####
 
-bioshare.env$run.dummy.study <- function (datasources = NULL)
+bioshare.env$run.dummy.study <- function (dt,datasources)
 {
-  if(is.null(datasources)) datasources <- findLoginObjects()
+  if(missing(dt)) stop('dt(datable) is mandatory ...\nplease add data name as character!')
+  if(missing(datasources)) datasources <- findLoginObjects()
   ds <- datasources
   message('->Assigning Zeros vector(s) with appropriate size to the respective servers\n')
   # call length
-  ln <- datashield.aggregate(ds,as.symbol('NROW(D)'))
+  cally <- paste0('NROW(',dt,')')
+  ln <- datashield.aggregate(ds,as.symbol(cally))
   #make zeros vector in each server 
   for (i in 1:length(ds)) { datashield.assign(ds[i],'zeros.dummy',call('rep',0,ln[[i]])) }
   
@@ -392,16 +390,22 @@ bioshare.env$run.dummy.study <- function (datasources = NULL)
   
   for (i in 1:length(ds)){
     
-    effect_name<-paste0(names(ds[i]),'_effect')
+    effect_name<-names(ds[i])
     #assign 1 to study and 0 to others
     message(paste0('---processing ',effect_name,'...'))
     datashield.assign(ds[i],effect_name,as.name('zeros.dummy+1'))
     datashield.assign(ds[-i],effect_name,as.name('zeros.dummy'))
     
+    callcbind<-paste0('cbind(',dt,',',effect_name,')')
+    datashield.assign(ds[i],dt,as.symbol(callcbind))
+    datashield.assign(ds[-i],dt,as.symbol(callcbind))
     
-    cat(capture.output(datashield.aggregate(ds,as.name(paste0('meanDS(',effect_name,')')))))
-    
-  }  
+    datashield.rm(ds[i],effect_name)
+    datashield.rm(ds[-i],effect_name)
+    #cat(capture.output(datashield.aggregate(ds,as.name(paste0('meanDS(',effect_name,')')))))
+     
+  }
+  
 }
 
 ##########################################
