@@ -43,8 +43,8 @@ subgroup.names.bmi <- run.get.subset(subvar='PM_BMI_CATEGORIAL',vars.list=myvar,
 #specify the name (character) of the dataframe that result from run.get.subset ex: D.GENDER0 or D.GENDER1
 #data name depend on the subgroup we want to study so his value change frequently. Here the sugroup is GENDER0(male)
 
-#data <- 'D.GENDER0' # 0 OR 1
-data <- 'D.PM_BMI_CATEGORIAL2' # 1, 2 OR 3 
+data <- 'D.GENDER0' # 0 OR 1
+#data <- 'D.PM_BMI_CATEGORIAL2' # 1, 2 OR 3 
 
 ###################################################################################################################
 #################################################################################
