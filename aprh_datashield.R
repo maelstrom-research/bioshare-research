@@ -27,7 +27,7 @@ study<-c('lifelines','ukb')
 opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 
 
-########### DATA THAT WILL BE USED FOR THE MAIN ANALYSIS############
+########################     DATA THAT WILL BE USED FOR THE MAIN ANALYSIS      ############
 #specify the name (character) of the dataframe that was assigned in datashield.login ('D' by default)
 data <- 'D'
 
@@ -144,12 +144,9 @@ run.extract.glm.stats(glm.res)
 
 ################# NA STATS ##########################
 
-#### create NA subset = NA.D (default for main analysis and for a specific model) on server side
-run.NA.glm.subset(formula=formula)
-
-# IMPORTANT NOW USE na.data = value of NAsubset [default is NA.D]
-#[default NA for main analyis and the model characterised by formula above]
-nadata = 'NA.D' 
+#### create NA subset ex: NA.D (default for main analysis and for a specific model) on server side
+#this function assign NA.D.xxxx on server side and return the name of the assign NA dataframe.
+nadata <- run.NA.glm.subset(formula=formula)
 
 #check number of missing cases
 ds.dim(nadata)
