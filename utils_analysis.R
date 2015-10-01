@@ -128,6 +128,15 @@ bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,data = NULL, 
 ########################################### MODELING UTILS ##############################################
 
 
+#######################################################################
+# this function remove the sugroup term in original model: useful for subgroup analysis
+
+bioshare.env$run.adjust.subgroup.model <- function(model,subgroup){
+  x <- unlist(strsplit(model,'\\+'))
+  x.ind <- which(sapply(x,function(k) grepl(k,subgroup)))
+  paste0(x[-x.ind],collapse='+') 
+} 
+
 #################### create dummy study effect vars #####
 
 bioshare.env$run.dummy.study <- function (data,datasources)
@@ -369,8 +378,12 @@ bioshare.env$run.NA.glm.subset<-function(glm.result,formula ,NAsubset=NULL,datas
   datashield.assign(ds, NAsubset, callSUBSET)
   
   #clean server workspace
-  to_rm <- c("cc","complt","cs","dt","lg" , "rs", "th","varname"  )
+  to_rm <- c("cc","complt","cs","dt","lg" , "rs", "th","varname","RD")
   invisible(sapply(to_rm,function(x) datashield.rm(ds,x)))
+  #info to user
+  cat(paste0("You may check the assigned NA.dataframe  with the following datashield command: datashield.symbols(opals)"))
+  
+  return(NAsubset)
 }
 
 
