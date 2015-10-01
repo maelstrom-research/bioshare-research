@@ -76,36 +76,37 @@ bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
 
 
 ########INTERNAL FUNCTION
-bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,dt = NULL, datasources=NULL){
+bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,data = NULL, datasources=NULL){
   
   #subset by sub_by first to generate the first subset
   if(is.null(datasources)) datasources <- findLoginObjects()
   ds <- datasources
   
-  #verify dt (datatable)
-  if(is.null(dt)) {message('dt(data table) is not specified ... default table "D" (if available on server side) will be used '); dt <- 'D'}
+  #verify data
+  if(is.null(data)) {message('data is not specified ... default table "D" (if available on server side) will be used '); data <- 'D'}
 
   #Sanity check : subvar should always be a factor
-  subset.class <- checkClass(ds,paste0(dt,'$',subvar))
+  subset.class <- checkClass(ds,paste0(data,'$',subvar))
   if(subset.class != 'factor') stop('subvar must be a categorical variable ...',call.=F)
   
-  message(paste0('\n===> Subsetting ',dt, ' by ',subvar,'\nWait please do not interrupt!...'))
+  #vars.to.subset <- paste0(vars.list,collapse=', ')
+  message(paste0('\n===> Subsetting selected vars.list of ',data, ' by ',subvar,'\nWait please do not interrupt!...'))
   vars<-unique(c(subvar,unlist(vars.list)))
-  cally <- call('subsetDS',dt = dt, complt=F, rs=NULL, cs=vars)
+  cally <- call('subsetDS',dt = data, complt=F, rs=NULL, cs=vars)
   datashield.assign(ds,'newdt',cally)   #new df with only the variables needed (avoid time consuming)
   
   cally <- call('subsetByClassDS','newdt', subvar)
   datashield.assign(ds,'subobj',cally)
-  message(paste0('===> Subset of ',dt, ' by ',subvar,' is created'))
+  message(paste0('===> Subset of ',data, ' by ',subvar,' is created'))
   
   #define infoname
-  message('\n===>Assigning subsetted objects on server side...\nWait please do not interrupt!...')
+  message('\n===>Assigning the subsetted dataframe(s) on server side...\nWait please do not interrupt!...')
   cally <- as.name('namesDS(subobj)')
   subinfo<-datashield.aggregate(ds,cally)[[1]] #get names of subsetted object
   
   #define name of object to be assigned
   subinfobj<-sapply(subinfo,function(x){  #assign new subsetted object in server and return their name
-    newname<-paste0(dt,'.',sub('\\.level_(\\d+)$','\\1',x))  #transform names
+    newname<-paste0(data,'.',sub('\\.level_(\\d+)$','\\1',x))  #transform names
     toassign<-paste0('subobj$',x)
     datashield.assign(ds,newname,as.name(toassign))    ###assigned objs are in server
     return(newname)
@@ -117,7 +118,8 @@ bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,dt = NULL, da
   to.rm <- c("complt","cs","dt","newdt","rs","subobj")
   for(x in to.rm) {datashield.rm(ds,x)} #Clean space
   
-  message(paste0('-- Object ',subinfobj ,' is assigned',collapse='\n'))
+  message(paste0('-- dataframe ',subinfobj ,' is assigned',collapse='\n'))
+  cat(paste0("You may check assigned subsetted dataframes with the following datashield command: datashield.symbols(opals)"))
   return(invisible(subinfobj))
 }
 
@@ -125,7 +127,43 @@ bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,dt = NULL, da
 #########################################################################################################
 ########################################### MODELING UTILS ##############################################
 
-####################GLM
+
+#################### create dummy study effect vars #####
+
+bioshare.env$run.dummy.study <- function (data,datasources)
+{
+  if(missing(data)) stop('data is mandatory ...\nplease add data name as character!')
+  if(missing(datasources)) datasources <- findLoginObjects()
+  ds <- datasources
+  # call length
+  cally <- paste0('NROW(',data,')')
+  ln <- datashield.aggregate(ds,as.symbol(cally))
+  #make zeros vector in each server 
+  for (i in 1:length(ds)) { datashield.assign(ds[i],'zeros.dummy',call('rep',0,ln[[i]])) }
+  
+  message(paste0(paste0(names(ds),collapse=', '), ' dummy variable(s) will be stored in dataframe ',data))
+  
+  for (i in 1:length(ds)){
+    
+    effect_name<-names(ds[i])
+    #assign 1 to study and 0 to others
+    message(paste0('---processing ',effect_name,' dummy ...'))
+    datashield.assign(ds[i],effect_name,as.name('zeros.dummy+1'))
+    datashield.assign(ds[-i],effect_name,as.name('zeros.dummy'))
+    
+    callcbind<-paste0('cbind(',data,',',effect_name,')')
+    datashield.assign(ds[i],data,as.symbol(callcbind))
+    datashield.assign(ds[-i],data,as.symbol(callcbind))
+    
+    datashield.rm(ds[i],effect_name)
+    datashield.rm(ds[-i],effect_name)
+    #cat(capture.output(datashield.aggregate(ds,as.name(paste0('meanDS(',effect_name,')'))))) 
+  }
+  cat(paste0("You may check stored dummy variables with the following datashield command: ds.colnames('",data,"')"))
+}
+
+
+####################################   GLM   #######################
 bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, print = T,...)
 {
   if(missing(formula)){
@@ -146,8 +184,8 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
     outcomevar<-formulasplit[1]
     explanvars<-formulasplit[2]
     
-    dt <- extract(outcomevar)$holders
-    effect_name <- paste0(dt,'.',names(ds))
+    data <- extract(outcomevar)$holders
+    effect_name <- paste0(data,'$',names(ds))
     effect_name <- effect_name[-(which(grepl(ref,effect_name)))]
     effect.vars.in.formula <- paste(effect_name,collapse='+')
     
@@ -167,7 +205,6 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
   }else{
     glm.result<-ds.glm(formula=formula,family=family,datasources=ds,...)
   }
-  
   
   ##Saving Result object in file versioned
   if(as.logical(save)){
@@ -191,19 +228,19 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
 ####################################################################################
 #this function create a formula according to the model, outcome and exposition vars
 
-bioshare.env$run.update.formula<-function(outcome,expo,model,dt)
+bioshare.env$run.update.formula<-function(outcome,expo,model,data)
 {
   mf <- match.call(expand.dots = FALSE)
   arg.call <- names(mf)[-1]
-  arg.names<-c('outcome','expo','model','dt')
+  arg.names<-c('outcome','expo','model','data')
   missing.arg<-which(!arg.names %in% arg.call)
   missing.call <- paste(arg.names[missing.arg],collapse=' and ')
   if(length(missing.arg)>1) stop(paste0(missing.call,' are required'),call.=F)
   else if (length(missing.arg)==1) stop(paste0(missing.call,' is required'),call.=F)
   
-  fm <-  paste0(dt,'$',outcome,'~',dt,'$',model,'+',expo)
-  fm <- gsub('+',paste0('+',dt,'$'),fm,fixed=T)
-  fm <- gsub('*',paste0('*',dt,'$'),fm,fixed=T)  
+  fm <-  paste0(data,'$',outcome,'~',data,'$',model,'+',expo)
+  fm <- gsub('+',paste0('+',data,'$'),fm,fixed=T)
+  fm <- gsub('*',paste0('*',data,'$'),fm,fixed=T)  
   fm
 }
 
@@ -219,16 +256,16 @@ bioshare.env$run.update.formula<-function(outcome,expo,model,dt)
 #param ...= any params that go to glm (except formula) (i.e: offset, data, weights,wiewIter, datasource)
 #param Ncases = a boolean (TRUE or FALSE(default)) wether to compute N cases or not in the final result  
 
-bioshare.env$run.model<-function(outcome,expo,model,family,dt,Ncases=FALSE,...)
+bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,...)
 {
   if(missing(outcome)) stop('outcome is required...',call.=F)
   if(missing(expo)) stop('exposition variable is required...',call.=F)
   if(missing(model)) stop('model formula is required...',call.=F)
-  #verify dt (datatable)
-  if(missing(dt)) stop('dt(datatable) is mandatory',call.=F)
+  #verify data
+  if(missing(data)) stop('data is mandatory',call.=F)
   
   #update formula
-  formula <- run.update.formula(outcome,expo,model,dt)
+  formula <- run.update.formula(outcome,expo,model,data)
   
   #run glm 
   glm.res <- run.meta.glm(formula,family,print=T,...)
@@ -293,19 +330,25 @@ bioshare.env$run.NA.glm.subset<-function(glm.result,formula ,NAsubset=NULL,datas
   arg.names <- names(mf)
   
   if ((! 'glm.result' %in% arg.names) && (!'formula' %in% arg.names)) {stop('Either a glm run or a formula is required ...',call.=F)}
-  if(is.null(datasources)) { datasources = findLoginObjects()}
-  if(is.null(NAsubset)){ 
-    warning("NAsubset is not specified ...the subset will be saved in 'NAdf' object on server side",call.=F,immediate.=T)
-    NAsubset <- 'NAdf'
-  }
-  ds <- datasources
-  #parsing var names from glm formula
   if(!'formula' %in% arg.names){
     glm.formula <- gsub('\\s+','',glm.result$formula)
   }else {
     glm.formula <- formula
   }
+  
+  #parsing var.list from glm formula
   vars.list<-strsplit(glm.formula,'\\+|~|\\*|\\|+')
+  
+  if(is.null(NAsubset)){ 
+    data <- unique(extract(vars.list)$holders)
+    NAsubset <- paste0('NA.',data)
+    warning(paste0("NAsubset is not specified ...the subset will be saved in ", NAsubset, " object on server side"),call.=F,immediate.=T)
+  }
+  
+  if(is.null(datasources)) { datasources = findLoginObjects()}
+  ds <- datasources
+  
+  #define vars.2df and vars.names from var.list 
   vars.2df<-unlist(vars.list)
   vars.names<-extract(vars.list)$elements
   
@@ -331,10 +374,15 @@ bioshare.env$run.NA.glm.subset<-function(glm.result,formula ,NAsubset=NULL,datas
 }
 
 
-bioshare.env$run.NA.stats<-function(var,iscat=F,datasource = NULL)
+bioshare.env$run.NA.stats<-function(var,iscat=T,na.data,datasource = NULL)
 {
+  if(missing(na.data)) stop('na.data is mandatory ...\nPlease specify the NA dataframe.')
   if(is.null(datasource)) { datasource = findLoginObjects()}
   ds <- datasource
+  
+  #update var to na.data$var
+  var<- paste0(na.data,'$',var)
+  
   if(as.logical(iscat)) {
     tocall <- paste0('table1dDS(',var,')')
     rs <- datashield.aggregate(ds,as.name(tocall))
@@ -371,42 +419,6 @@ bioshare.env$run.NA.stats<-function(var,iscat=F,datasource = NULL)
   res
 }
 
-
-#################### create dummy study effect vars #####
-
-bioshare.env$run.dummy.study <- function (dt,datasources)
-{
-  if(missing(dt)) stop('dt(datable) is mandatory ...\nplease add data name as character!')
-  if(missing(datasources)) datasources <- findLoginObjects()
-  ds <- datasources
-  message('->Assigning Zeros vector(s) with appropriate size to the respective servers\n')
-  # call length
-  cally <- paste0('NROW(',dt,')')
-  ln <- datashield.aggregate(ds,as.symbol(cally))
-  #make zeros vector in each server 
-  for (i in 1:length(ds)) { datashield.assign(ds[i],'zeros.dummy',call('rep',0,ln[[i]])) }
-  
-  message('->Creating dummies effect size variables for each study...')
-  
-  for (i in 1:length(ds)){
-    
-    effect_name<-names(ds[i])
-    #assign 1 to study and 0 to others
-    message(paste0('---processing ',effect_name,'...'))
-    datashield.assign(ds[i],effect_name,as.name('zeros.dummy+1'))
-    datashield.assign(ds[-i],effect_name,as.name('zeros.dummy'))
-    
-    callcbind<-paste0('cbind(',dt,',',effect_name,')')
-    datashield.assign(ds[i],dt,as.symbol(callcbind))
-    datashield.assign(ds[-i],dt,as.symbol(callcbind))
-    
-    datashield.rm(ds[i],effect_name)
-    datashield.rm(ds[-i],effect_name)
-    #cat(capture.output(datashield.aggregate(ds,as.name(paste0('meanDS(',effect_name,')')))))
-     
-  }
-  
-}
 
 ##########################################
 
