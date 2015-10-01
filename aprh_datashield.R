@@ -1,10 +1,16 @@
+################################################################
+#
+#                         MAIN ANALYSIS
+#
+###############################################################
+
+# Source the bioshare environnment
 source('utils_analysis.R',echo=F,print.eval=F)
 
-#Adjusted for age, sex, BMI, highest level of education, and smoking status,
-#pack-years smoked, length at baseline residence, exposure to second-hand smoke, and self-declared allergies
-
+#load libraries
 library(datashieldclient)
 library(dsBetaTestClient)
+
 #variables need of aprh
 myvar<-list('ADM_YRINT','AGE_YRS','AGE_YRS_CATEGORICAL','GENDER','EDU_HIGHEST_2','WORK_STATUS_CURRENT','SMK_STATUS','SMK_TBC_CURRENT','SMK_PACKYRS',
             'SMK_PASSIVE_HOME','SMK_PASSIVE_WORK','SMK_PASSIVE_ALL','SMK_PASSIVE_TIME','PM_BMI_CONTINUOUS','PM_BMI_CATEGORIAL','DIS_ASTHMA','DIS_ALLERG',
@@ -17,18 +23,22 @@ myvar<-list('ADM_YRINT','AGE_YRS','AGE_YRS_CATEGORICAL','GENDER','EDU_HIGHEST_2'
 load('login-aprh.rda')
 study<-c('lifelines','ukb')
 
-#login to datashield and assign data to 'D'
+#login to datashield and assign data to 'D' as default
 opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 
 
-##############################################################################################################
+########################     DATA THAT WILL BE USED FOR THE MAIN ANALYSIS      ############
+#specify the name (character) of the dataframe that was assigned in datashield.login ('D' by default)
+data <- 'D'
 
-####################################################################################
+###########################################################################################
+
+########################################################
 #           univariate: outcome~confounding
-####################################################################################
+#######################################################
 
 ########### PART 1 #########################
-# glm for to compute ttest
+# glm to compute ttest
 confounding1 <- list('AGE_YRS','SMK_PACKYRS','RES_LENGTH')
 
 ####################
@@ -44,7 +54,7 @@ result.part1<-list()
 for (conf in confounding1){
   formula.update <- paste0('D$',conf,'~','D$',outcome)
   
-  glm.res<-ds.glm(formula.update,family='gaussian') #datasources=opals[1]
+  glm.res<-ds.glm(formula.update,family='gaussian') 
   glm.stat<-run.extract.glm.stats(glm.res)
   glm.stat<-structure(list(glm.stat),.Names=conf)
   result.part1<-c(result.part1,glm.stat)
@@ -68,34 +78,35 @@ lapply(result.part2,function(x){ format(x$chi2Test$pooled$p.value,digits=5)})
 
 ####################### define models [model1, model2, model3]
 ###model_1(age ajusted)                                                                                     <-
-model<-'D$AGE_YRS'
+model<-'AGE_YRS+GENDER'
 
 #model_2(Ajusted for age, sex, BMI, highest level of education, and smoking status)                         <-
-model<-'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS'
+model<-'AGE_YRS+GENDER+EDU_HIGHEST_2+INCOME'
 
 # model_3(Adjusted for age, sex, BMI, highest level of education, and smoking status, pack-years smoked,>>..  <-
 #>>...length at baseline residence, exposure to second-hand smoke, and self-declared allergies)    				
-model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS+D$RES_LENGTH+D$SMK_PASSIVE_ALL'
+model <- 'AGE_YRS+GENDER+EDU_HIGHEST_2+INCOME+SMK_STATUS+RES_LENGTH+SMK_PASSIVE_ALL' #+SMK_PACKYRS
 
 ###############
 #other models to test: model2 -->->->->-> model3
 #model 2a (Ajusted for age, sex, BMI, highest level of education, and smoking status)+pack-years smoked  
-#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS'
+#model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PACKYRS'
 
 #model 2b (Ajusted for age, sex, BMI, highest level of education, and smoking status)+length at baseline residence  
-#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$RES_LENGTH'
+#model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+RES_LENGTH'
 
 #model 2c (Ajusted for age, sex, BMI, highest level of education, and smoking status)+exposure to second-hand smoke  
-#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PASSIVE_ALL'
+#model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_ALL'
 
 #model 2ab (Ajusted for age, sex, BMI, highest level of education, and smoking status)+pack-years smoked and length at baseline residence  
-#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS+D$RES_LENGTH'
+#model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PACKYRS+RES_LENGTH'
 
 #model 2ac (Ajusted for age, sex, BMI, highest level of education, and smoking status)+pack-years smoked and exposure to second-hand smoke   
-#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$SMK_PACKYRS+D$SMK_PASSIVE_ALL'
+#model <- 'AGE_YRS+D$GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PACKYRS+SMK_PASSIVE_ALL'
 
 #model 2bc (Ajusted for age, sex, BMI, highest level of education, and smoking status)+length at baseline residence and exposure to second-hand smoke 
-#model <- 'D$AGE_YRS+D$GENDER+D$PM_BMI_CATEGORIAL+D$EDU_HIGHEST_2+D$SMK_STATUS+D$RES_LENGTH+D$SMK_PASSIVE_ALL'
+#model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+RES_LENGTH+SMK_PASSIVE_ALL'
+
 
 #######################
 expo <- 'PM25_ESCAPE'
@@ -104,40 +115,47 @@ expo <- 'PM25_ESCAPE'
 #expo <- 'PMcoarse_ESCAPE'
 
 ####################
-outcome <- 'SYM_WHEEZ' 
+#outcome <- 'SYM_WHEEZ' 
 #outcome <- 'SYM_SBREATH'
 #outcome <- 'SYM_PHLEGM_UP'
 #outcome <- 'SYM_PHLEGM_UP_FREQ'
 #outcome <- 'SYM_PHLEGM_DAY'
 #outcome <- 'SYM_PHLEGM_DAY_FREQ'
-#outcome <- 'MEDI_ASTHMA_COPD'
+outcome <- 'MEDI_ASTHMA_COPD'
 
 #pooled model to run [first create dummy study variables in server side by running run.dummy() once]
-run.dummy.study() #run once 
+run.dummy.study(data) #run once 
 datashield.symbols(opals) # check objects on server side
 
-#exposure effect statistics [keep variable name as expo]
-run.model(outcome,expo,model,family = 'binomial',Ncases=T,ref ='lifelines') #ref is specified here
+#exposure effect statistics  [see data = 'D' for main analysis]
+run.model(outcome,expo,model,family = 'binomial',data,Ncases=T,pval = F, ref ='lifelines',check=F) #ref is specified here
 
 #split model run [ no need to create dummy study variable, but you need to specify the datasource] 
-run.model(outcome,expo,model,family = 'binomial',Ncases=T,datasources = opals[2]) #ukbiobank opals[2]
+run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, datasources = opals[2],check=F) #ukbiobank opals[2]
 
 
-################## TO DO #################
 
-#generate formula based on previously called expo, outcome and model.
-formula <- paste0('D$',outcome,'~',model,'+D$',expo)
+#generate formula based on previously called expo, outcome, model and data.
+formula <- run.update.formula(outcome,expo,model,data) #[ data = 'D' main analysis]
 
 glm.res<-run.meta.glm(formula,family='binomial',ref='lifelines')
 run.extract.glm.stats(glm.res)
 
-#create NAdf (default) on server side
-run.NA.glm.subset(formula=formula)
-#check number of missing cases
-ds.dim('NAdf')
 
-# run NA stats 
-run.NA.stats('NAdf$AGE_YRS')
-run.NA.stats('NAdf$GENDER',T)
-run.NA.stats('NAdf$PM_BMI_CATEGORIAL',T)
-run.NA.stats('NAdf$EDU_HIGHEST_2',T)
+################# NA STATS ##########################
+
+#### create NA subset ex: NA.D (default for main analysis and for a specific model) on server side
+#this function assign NA.D.xxxx on server side and return the name of the assign NA dataframe.
+nadata <- run.NA.glm.subset(formula=formula)
+
+#check number of missing cases
+ds.dim(nadata)
+
+#### run NA stats 
+run.desc.stats('AGE_YRS',iscat=F, data = nadata)
+run.desc.stats('GENDER',data= nadata)
+run.desc.stats('PM_BMI_CATEGORIAL',data= nadata)
+run.desc.stats('EDU_HIGHEST_2',data= nadata)
+
+
+
