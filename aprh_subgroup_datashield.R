@@ -95,7 +95,7 @@ run.model(outcome,expo,model.sgrp,family = 'binomial',data,Ncases=T,datasources 
 
 
 #generate formula based on previously called expo, outcome, model.srgp and data.
-formula <- run.update.formula(outcome,expo,model.sgrp,data) #[ data = 'D' main analysis]
+formula <- run.update.formula(outcome,expo,model.sgrp,data) #[ data = subgroup analysis data]
 
 glm.res<-run.meta.glm(formula,family='binomial',ref='lifelines')
 run.extract.glm.stats(glm.res)
