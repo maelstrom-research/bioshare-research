@@ -153,7 +153,7 @@ bioshare.env$run.changelevel <- function(var,new.levels,new.varname=NULL,data=NU
   # get the current number of levels
   cally <- paste0("levels(", var.dollar, ")")
   xx <- datashield.aggregate(ds[1], as.symbol(cally))  ###check info only for one server reduce time
-  if((ll<-length(unique(unlist(xx)))) > length(new.levels)){
+  if((ll<-length(unique(unlist(xx)))) != length(new.levels)){
     stop(gettextf("Please new.levels must be a vector of size %d",ll), call.=FALSE)
   }
   message(paste0('->recoding levels of ',var,' ...'))
