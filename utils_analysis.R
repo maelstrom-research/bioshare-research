@@ -185,7 +185,7 @@ bioshare.env$run.changelevel <- function(var,new.levels,new.varname=NULL,data=NU
 
 bioshare.env$run.adjust.subgroup.model <- function(model,subgroup){
   x <- unlist(strsplit(model,'\\+'))
-  x.ind <- which(sapply(x,function(k) grepl(k,subgroup)))
+  x.ind <- which(sapply(x,function(k) grepl(subgroup,k,ignore.case=T)))
   paste0(x[-x.ind],collapse='+') 
 } 
 
@@ -385,7 +385,7 @@ bioshare.env$run.extract.glm.stats <- function(glm.result)
 #################################################################
 #DOC TO DO 
 #
-bioshare.env$run.NA.glm.subset<-function(glm.result,formula ,NAsubset=NULL,datasources=NULL)
+bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,datasources=NULL)
 {
   mf <- match.call(expand.dots = FALSE)
   arg.names <- names(mf)
