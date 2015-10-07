@@ -119,7 +119,8 @@ bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,data = NULL, 
   for(x in to.rm) {datashield.rm(ds,x)} #Clean space
   
   message(paste0('-- dataframe ',subinfobj ,' is assigned',collapse='\n'))
-  cat(paste0("You may check assigned subsetted dataframes with the following datashield command: datashield.symbols(opals)"))
+  info <- paste0("ds.colnames('",subinfobj,"')",collapse=' OR ')
+  cat(paste0("You may check assigned subsetted dataframes with the following datashield command: ",info,""))
   return(invisible(subinfobj))
 }
 
@@ -186,7 +187,8 @@ bioshare.env$run.changelevel <- function(var,new.levels,new.varname=NULL,data=NU
 bioshare.env$run.adjust.subgroup.model <- function(model,subgroup){
   x <- unlist(strsplit(model,'\\+'))
   x.ind <- which(sapply(x,function(k) grepl(subgroup,k,ignore.case=T)))
-  paste0(x[-x.ind],collapse='+') 
+  if(length(x.ind)) paste0(x[-x.ind],collapse='+') 
+  else paste0(x,collapse='+')
 } 
 
 #################### create dummy study effect vars #####
@@ -403,7 +405,7 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   if(is.null(NAsubset)){ 
     data <- unique(extract(vars.list)$holders)
     NAsubset <- paste0('NA.',data)
-    warning(paste0("NAsubset is not specified ...the subset will be saved in ", NAsubset, " object on server side"),call.=F,immediate.=T)
+    warning(paste0("NAsubset is not specified ...the subset will be saved in ", NAsubset, " dataframe on server side"),call.=F,immediate.=T)
   }
   
   if(is.null(datasources)) { datasources = findLoginObjects()}
@@ -433,20 +435,21 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   to_rm <- c("cc","complt","cs","dt","lg" , "rs", "th","varname","RD")
   invisible(sapply(to_rm,function(x) datashield.rm(ds,x)))
   #info to user
-  cat(paste0("You may check the assigned NA.dataframe  with the following datashield command: datashield.symbols(opals)"))
+  cat(paste0("You may check the assigned ",NAsubset," dataframe with the following datashield commands: 
+   datashield.symbols(opals), ds.colnames('",NAsubset,"') AND ds.dim('",NAsubset,"')")) 
   
   return(NAsubset)
 }
 
 
-bioshare.env$run.NA.stats<-function(var,iscat=T,na.data,datasource = NULL)
+bioshare.env$run.desc.stats<-function(var,iscat=T,data,datasource = NULL)
 {
-  if(missing(na.data)) stop('na.data is mandatory ...\nPlease specify the NA dataframe.')
+  if(missing(data)) stop('data is mandatory ...\nPlease specify the dataframe.')
   if(is.null(datasource)) { datasource = findLoginObjects()}
   ds <- datasource
   
   #update var to na.data$var
-  var<- paste0(na.data,'$',var)
+  var<- paste0(data,'$',var)
   
   if(as.logical(iscat)) {
     tocall <- paste0('table1dDS(',var,')')
