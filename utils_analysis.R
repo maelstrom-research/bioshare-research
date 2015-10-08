@@ -110,10 +110,10 @@ bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,data = NULL, 
     toassign<-paste0('subobj$',x)
     datashield.assign(ds,newname,as.name(toassign))    ###assigned objs are in server
     return(newname)
-  })
+  },USE.NAMES = F)
   
   #adjust name according to new objects
-  names(subinfobj)<-subinfobj
+  #names(subinfobj)<-subinfobj
   
   to.rm <- c("complt","cs","dt","newdt","rs","subobj")
   for(x in to.rm) {datashield.rm(ds,x)} #Clean space
