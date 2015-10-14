@@ -45,9 +45,8 @@ bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
   result<-NULL
   for(var in vars.list){
     #compute table2D
-    message(paste0('\n==> Computing chi-square ',var,' X ',subset,'\nDo not interrupt!...'))
+    message(paste0('=> Computing chi-square ',var,' X ',subset,'\nDo not interrupt!...'))
     chi_square<-ds.table2D(x=paste0('D$',var), y=paste0('D$',subset), type=type,warningMessage=F)
-    message(paste0('==> chi-square ',var,' X ',subset,' is completed'))
     
     #arranging final result
     w<-structure(list(chi_square),.Names=var)
@@ -90,17 +89,16 @@ bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,data = NULL, 
   if(subset.class != 'factor') stop('subvar must be a categorical variable ...',call.=F)
   
   #vars.to.subset <- paste0(vars.list,collapse=', ')
-  message(paste0('\n===> Subsetting selected vars.list of ',data, ' by ',subvar,'\nWait please do not interrupt!...'))
+  message(paste0('=> Subsetting selected vars of ',data, ' by ',subvar,'\nWait please do not interrupt!...'))
   vars<-unique(c(subvar,unlist(vars.list)))
   cally <- call('subsetDS',dt = data, complt=F, rs=NULL, cs=vars)
   datashield.assign(ds,'newdt',cally)   #new df with only the variables needed (avoid time consuming)
   
   cally <- call('subsetByClassDS','newdt', subvar)
   datashield.assign(ds,'subobj',cally)
-  message(paste0('===> Subset of ',data, ' by ',subvar,' is created'))
   
   #define infoname
-  message('\n===>Assigning the subsetted dataframe(s) on server side...\nWait please do not interrupt!...')
+  message('=> Assigning the subsetted dataframe(s) on server side...\nWait please do not interrupt!...')
   cally <- as.name('namesDS(subobj)')
   subinfo<-datashield.aggregate(ds,cally)[[1]] #get names of subsetted object
   
@@ -120,7 +118,7 @@ bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,data = NULL, 
   
   message(paste0('-- dataframe ',subinfobj ,' is assigned',collapse='\n'))
   info <- paste0("ds.colnames('",subinfobj,"')",collapse=' OR ')
-  cat(paste0("You may check assigned subsetted dataframes with the following datashield command: ",info,""))
+  cat(paste0("You may check the assigned subsetted dataframes with the following datashield command: ",info,""))
   return(invisible(subinfobj))
 }
 
@@ -263,11 +261,9 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
   message(paste0('formula for glm: ',formula))  
   message(paste0('family for glm: ',family))
   
-  if(missing(...)){
-    glm.result<-ds.glm(formula=formula,family=family,datasources=ds)
-  }else{
-    glm.result<-ds.glm(formula=formula,family=family,datasources=ds,...)
-  }
+  #run glm now
+  glm.result<-ds.glm(formula=formula,family=family,datasources=ds,...)
+  
   
   ##Saving Result object in file versioned
   if(as.logical(save)){
@@ -331,10 +327,15 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,...
   formula <- run.update.formula(outcome,expo,model,data)
   
   #run glm 
-  glm.res <- run.meta.glm(formula,family,print=T,...)
+  glm.res <- try(run.meta.glm(formula,family,print=T,...),silent=T)
+  glm.err <- inherits(glm.res,'try-error')
+  glm.ok <-  !( glm.err || is.null(glm.res)) 
   
   #extract glm stats and process result
-  glm.stats<-run.extract.glm.stats(glm.res)
+  if(glm.ok) glm.stats<-run.extract.glm.stats(glm.res)
+  else if (glm.err) return(message(glm.res))
+  else return(glm.res)
+  
   
   #compute N valid (complete cases)
   if(Ncases) {
@@ -442,11 +443,13 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
 }
 
 
-bioshare.env$run.desc.stats<-function(var,iscat=T,data,datasource = NULL)
+bioshare.env$run.desc.stats<-function(var,iscat=T,data,datasources = NULL)
 {
   if(missing(data)) stop('data is mandatory ...\nPlease specify the dataframe.')
-  if(is.null(datasource)) { datasource = findLoginObjects()}
-  ds <- datasource
+  if(is.null(datasources)) { datasources = findLoginObjects()}
+  ds <- datasources
+  
+  .vectorize <- function(x,subscript) {sapply(x,'[[',subscript)}
   
   #update var to na.data$var
   var<- paste0(data,'$',var)
@@ -455,17 +458,20 @@ bioshare.env$run.desc.stats<-function(var,iscat=T,data,datasource = NULL)
     tocall <- paste0('table1dDS(',var,')')
     rs <- datashield.aggregate(ds,as.name(tocall))
     
-    res <- lapply(rs,function(x){
-      rsi<-t(as.matrix(x$table))    
-      rni<-paste0(rownames(rsi),':')
-      stats<-as.matrix(paste0(rsi,"(",round((rsi/rsi[nrow(rsi)])*100,2),') [N = ',rsi[nrow(rsi)],']'))
-      data.frame(stats,row.names=rni)
-    })
-     
-   
-  }else{
+    #XXXXXXXX 
+    rs.tab<-.vectorize(rs,'table')
+    rs.mess <- .vectorize(rs,'message')
+    #get the message validity
+    rs.ok <- !any(grepl('invalid',rs.mess,ignore.case=T))
+    #compute pooled tab
+    Pooled <- apply(rs.tab,1,function(x) sum(as.numeric(x)))
     
-    .vectorize <- function(x,subscript) {sapply(x,'[[',subscript)}
+    #put everything together
+    rs.tab.with.pooled <- cbind(rs.tab,Pooled)
+    k <- apply(rs.tab.with.pooled,2,function(x) {x<-as.numeric(x); pct <- round(x/x[length(x)]*100,2); paste0(x,'(',pct,')')})
+    res <- data.frame(k,row.names=row.names(rs.tab),stringsAsFactors=F)
+    
+  }else{
     
     #tocall <- paste0('quantileMeanDS(',var,')')
     tocallmean <- paste0('meanDS(',var,')')
@@ -476,16 +482,30 @@ bioshare.env$run.desc.stats<-function(var,iscat=T,data,datasource = NULL)
     rs.numna <- .vectorize(datashield.aggregate(ds,as.name(tocallnumna)),1)
     rs.length <- .vectorize(datashield.aggregate(ds,as.name(tocallength)),1)
     rs.var <- .vectorize(datashield.aggregate(ds,as.name(tocallvar)),1)
-      
-    validN<-rs.length - rs.numna  
-    sd<-round(sqrt(rs.var),2)
-    rs.mean <- round(rs.mean,2)
-    res <- paste0(rs.mean,'(',sd,') [N = ',validN,']')
-    meanSd.stats <- as.matrix(res)
-    res <- data.frame(meanSd.stats,row.names=names(ds))
+    
+    validN <- rs.length - rs.numna 
+    
+    rs.mean.agg <- weighted.mean(rs.mean,validN)
+    rs.var.agg <- weighted.mean(rs.var,validN)
+    validN.agg <- sum(validN)
+    names.w.p <- c(names(ds),'Pooled')
+    
+    rs.mean.with.pooled <- c(rs.mean,rs.mean.agg)
+    names(rs.mean.with.pooled) <- names.w.p
+    rs.var.with.pooled <- c(rs.var,rs.var.agg)
+    names(rs.var.with.pooled) <- names.w.p
+    validN.w.p <- c(validN,validN.agg) 
+    names(validN.w.p) <- names.w.p
+     
+    sd.w.p<-round(sqrt(rs.var.with.pooled),2)
+    m.w.p <- round(rs.mean.with.pooled,2) 
+    meanSd <- paste0(m.w.p,'(',sd.w.p,') [N = ',validN.w.p,']')
+  
+    res <- data.frame(meanSd,row.names=names.w.p,stringsAsFactors=F)
   }   
   res
 }
+
 
 
 ##########################################
