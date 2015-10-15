@@ -86,7 +86,7 @@ bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,data = NULL, 
 
   #Sanity check : subvar should always be a factor
   subset.class <- checkClass(ds,paste0(data,'$',subvar))
-  if(subset.class != 'factor') stop('subvar must be a categorical variable ...',call.=F)
+  if(subset.class != 'factor') stop('subvar must be a categorical or factor type variable ...',call.=F)
   
   #vars.to.subset <- paste0(vars.list,collapse=', ')
   message(paste0('=> Subsetting selected vars of ',data, ' by ',subvar,'\nWait please do not interrupt!...'))
@@ -442,7 +442,7 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
 }
 
 
-bioshare.env$run.desc.stats<-function(var,iscat=T,data = NULL,datasources = NULL)
+bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
 {
   if(is.null(datasources)) { datasources = findLoginObjects()}
   ds <- datasources
@@ -452,7 +452,11 @@ bioshare.env$run.desc.stats<-function(var,iscat=T,data = NULL,datasources = NULL
   #update var to na.data$var
   if(!is.null(data)) var<- paste0(data,'$',var)
   
-  if(as.logical(iscat)) {
+  class.check <- checkClass(ds[1],var) 
+  is.num <- class.check %in% c('integer','numeric')
+  is.factor <- class.check == 'factor'
+  
+  if(is.factor) {
     tocall <- paste0('table1dDS(',var,')')
     rs <- datashield.aggregate(ds,as.name(tocall))
     
@@ -469,7 +473,7 @@ bioshare.env$run.desc.stats<-function(var,iscat=T,data = NULL,datasources = NULL
     k <- apply(rs.tab.with.pooled,2,function(x) {x<-as.numeric(x); pct <- round(x/x[length(x)]*100,2); paste0(x,'(',pct,')')})
     res <- data.frame(k,row.names=row.names(rs.tab),stringsAsFactors=F)
     
-  }else{
+  }else if (is.num){ #is numeric
     
     #tocall <- paste0('quantileMeanDS(',var,')')
     tocallmean <- paste0('meanDS(',var,')')
