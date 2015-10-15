@@ -166,9 +166,9 @@ bioshare.env$run.changelevel <- function(var,new.levels,new.varname=NULL,data=NU
     datashield.assign(ds,data,as.name(callycbind))
     #clean server side
     datashield.rm(ds,new.var)   
-    cat(paste0("You may check the level-recoded variable with the following datashield commands: ds.levels('",data,'$',new.var,"') OR ds.table1D('",data,'$',new.var,"')"))
+    cat(paste0("You may check the level-recoded variable with the following datashield commands: run.desc.stats('",new.var,"',data='",data,"')"))  
   }else{
-    cat(paste0("You may check the level-recoded variable with the following datashield commands: ds.levels('",new.var,"') OR ds.table1D('",new.var,"')"))
+    cat(paste0("You may check the level-recoded variable with the following datashield commands: run.desc.stats('",new.var,"')"))
   }
   
 }
