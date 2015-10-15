@@ -139,9 +139,8 @@ bioshare.env$run.changelevel <- function(var,new.levels,new.varname=NULL,data=NU
   }
   new.var <- new.varname
   
-  if(!is.null(data)) {
-    var.dollar <- paste0(data,'$',var)
-  }
+  if(!is.null(data)) var.dollar <- paste0(data,'$',var)
+  else var.dollar <- var 
   
   # call the internal function that checks the input object is of the same class in all studies.
   typ <- checkClass(ds, var.dollar)
@@ -166,9 +165,9 @@ bioshare.env$run.changelevel <- function(var,new.levels,new.varname=NULL,data=NU
     datashield.assign(ds,data,as.name(callycbind))
     #clean server side
     datashield.rm(ds,new.var)   
-    cat(paste0("You may check the level-recoded variable with the following datashield commands: run.desc.stats('",new.var,"',data='",data,"')"))  
+    cat(paste0("You may check the level-recoded variable with the following commands: run.desc.stats('",new.var,"',data='",data,"')"))  
   }else{
-    cat(paste0("You may check the level-recoded variable with the following datashield commands: run.desc.stats('",new.var,"')"))
+    cat(paste0("You may check the level-recoded variable with the following commands: run.desc.stats('",new.var,"')"))
   }
   
 }
@@ -443,16 +442,15 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
 }
 
 
-bioshare.env$run.desc.stats<-function(var,iscat=T,data,datasources = NULL)
+bioshare.env$run.desc.stats<-function(var,iscat=T,data = NULL,datasources = NULL)
 {
-  if(missing(data)) stop('data is mandatory ...\nPlease specify the dataframe.')
   if(is.null(datasources)) { datasources = findLoginObjects()}
   ds <- datasources
   
   .vectorize <- function(x,subscript) {sapply(x,'[[',subscript)}
   
   #update var to na.data$var
-  var<- paste0(data,'$',var)
+  if(!is.null(data)) var<- paste0(data,'$',var)
   
   if(as.logical(iscat)) {
     tocall <- paste0('table1dDS(',var,')')
