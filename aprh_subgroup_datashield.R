@@ -18,47 +18,83 @@ myvar<-list('ADM_YRINT','AGE_YRS','AGE_YRS_CATEGORICAL','GENDER','EDU_HIGHEST_2'
             'PM_FEV1','PM_FEVC','PM_PEF','SYM_WHEEZ','SYM_SBREATH','NO2_ESCAPE','PM25_ESCAPE','PM25abs_ESC','PM10_ESC','NO2bg_ESCAPE','PMcoarse_ESCAPE',
             'RES_LENGTH','PM10_07_EU','NO2_06_EU','NO2_07_EU','NO2_05_EU','SYM_PHLEGM_UP','SYM_PHLEGM_DAY','SYM_PHLEGM_UP_FREQ','SYM_PHLEGM_DAY_FREQ')
 
-#load loggin information
-#load('/home/datashield/aprh/logindata.aprh.rda')
+#load loggin information: 'lifelines','ukb'
 load('login-aprh.rda')
-study<-c('lifelines','ukb')
 
 #login to datashield and assign data to 'D' as default
 opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 
-#here main data is 'D'
+#here main data is 'D': select it once at start
 main.data <- 'D'
 
-##################################################################################################################
 
-############ GENERATE THE SUBGROUP DATAFRAMES #####################
-# ex: here we are computing subset of all vars in myvar from D by GENDER. This function will return the names of the subgroup dataframes stored on server side 
-subgroup.names.gender <- run.get.subset(subvar='GENDER',vars.list=myvar,data=main.data)             #run once
+################################################################################################################################################################################
 
-# here we are computing subset of vars in myvar from D by PM_BMI_CATEGORIAL. This function will return the names of the subgroup dataframes stored on server side  
-subgroup.names.bmi <- run.get.subset(subvar='PM_BMI_CATEGORIAL',vars.list=myvar,data=main.data)     #run once
+################## -------------GENERATE THE SUBGROUP DATAFRAMES ----------------------------------------
+
+#---------------subgroup of D by GENDER on server side
+subgroup.names.gender <- run.get.subset(subvar='GENDER',vars.list=myvar,data=main.data)           #run once
+
+# ------------- subroup of D by DIS_ASTHMA on server side
+subgroup.asthma <- run.get.subset(subvar='DIS_ASTHMA',vars.list=myvar,data=main.data)             #run once
+
+##------------#BINARIZE BMI CAT--------------------
+# binarize the BMIcat_1_2_3 into BMIcat_0_1 (BMI>=30): 
+run.changelevel('PM_BMI_CATEGORIAL',new.levels=c(0,0,1),new.varname='OBESE_STATUS',data=main.data) #here OBESE_STATUS
+# now compute subgroup on server side 
+subgroup.obese <- run.get.subset(subvar='OBESE_STATUS',vars.list=myvar,data=main.data)    #run once
 
 
-###################    DATA THAT WILL BE USED FOR THE SUBGROUP  ANALYSIS      ################################ 
-#specify the name (character) of the dataframe that result from run.get.subset ex: D.GENDER0 or D.GENDER1
-#data name depend on the subgroup we want to study so his value change frequently. Here the sugroup is GENDER0(male)
+##-----------BINARIZE SMOKE STATUS (history) ------------------
+run.changelevel('SMK_STATUS',new.levels=c(0,1,1),new.varname='SMOKE_EVER',data=main.data)
+#compute subgroup on server side
+subgroup.smoke <- run.get.subset(subvar='SMOKE_EVER',vars.list=myvar,data=main.data)      #run once
 
-data <- 'D.GENDER0' # 0 OR 1
-#data <- 'D.PM_BMI_CATEGORIAL2' # 1, 2 OR 3 
 
-###################################################################################################################
-#################################################################################
-##            running some regressions :multivariate                           ##
-#################################################################################
+##-----------subgroup of D by MEDI_ASTHMA_COPD
+subgroup.astm.curr <- run.get.subset('DIS_ASTHMA_MEDS',myvar,main.data)                   #run once
 
-####################### define models [model1, model2, model3]
-###model_1(age ajusted)                                                                                     <-
+##############---------- SELECT THE DATA THAT WILL BE USED FOR THE CORRESPONDING SUBGROUP  ANALYSIS ----------------------
+#specify the name (character) of the dataframe that resulted from run.get.subset ex: D.GENDER0 or D.GENDER1
+
+##------ by SEX ---------
+data <- 'D.GENDER0'                                 # MÂLE
+data <- 'D.GENDER1'                                 # FEMALE
+
+## ------by OBESITY ----------
+data <- 'D.OBESE_STATUS0'                           # BMI_<30
+data <- 'D.OBESE_STATUS1'                           # BMI_>=30
+
+## ------ by ASTHMA HISTORY ----
+data <- 'D.DIS_ASTHMA0'                             # never
+data <- 'D.DIS_ASTHMA1'                             # ever
+
+## ----- by SMOKE HISTORY ------
+data <- 'D.SMOKE_EVER0'                             # never
+data <- 'D.SMOKE_EVER1'                             # previous + current
+
+
+
+## ------ by ASTHMA CURRENT: DIS_ASTHMA_MEDS
+data <- 'D.DIS_ASTHMA_MEDS0'                        #no current asthma 
+data <- 'D.DIS_ASTHMA_MEDS1'                        #current asthma
+
+
+
+
+################################################################################################################################################
+                  ################################################################################
+                  ##            running some regressions :multivariate                           ##
+                  #################################################################################
+
+## ---------- define models [model1, model2, model3] --------------------------------
+# -----model_1(age ajusted)                                                                                     <-
 model<-'AGE_YRS'
 
-#model_2(Ajusted for age, sex, BMI, highest level of education, and smoking status)                         <-
+#-----model_2(Ajusted for age, sex, BMI, highest level of education, and smoking status)                         <-
 model<-'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS'
 
-# model_3(Adjusted for age, sex, BMI, highest level of education, and smoking status, pack-years smoked,>>..  <-
+# ----model_3(Adjusted for age, sex, BMI, highest level of education, and smoking status, pack-years smoked,>>..  <-
 #>>...length at baseline residence, exposure to second-hand smoke, and self-declared allergies)      			
 model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+RES_LENGTH+SMK_PASSIVE_ALL' #+SMK_PACKYRS
 
@@ -78,40 +114,56 @@ outcome <- 'SYM_WHEEZ'
 #outcome <- 'SYM_PHLEGM_DAY_FREQ'
 #outcome <- 'MEDI_ASTHMA_COPD'
 
-
-##########################################################
-# remove all subgroup terms in the model: we can use "data" because this variable has some information on the subgroup 
-#run for each specific model
-model.sgrp <- run.adjust.subgroup.model(model,data)
-
-#pooled model to run [first create dummy study variables in server side by running run.dummy() once]
+###############################################################################
+# ------ pooled model to run [first create dummy study variables in server side by running run.dummy() once] ---------
 run.dummy.study(data) #run once for each subgroup
 
-#exposure effect statistics  [see data = 'D' for main analysis]
+########--------- RE-ADJUST THE MODEL HERE FOR EACH SUBGROUP TERMS -----------------------
+### -----remove all subgroup terms in the model: we can use a keyword stem of the subgroup terms to remove 
+### -----run it for each specific model
+
+#------ by SEX ---------
+model.sgrp <- run.adjust.subgroup.model(model,'gender')                        #ex: will remove all terms spelled like 'gender'
+
+# ------by OBESITY ----------
+model.sgrp <- run.adjust.subgroup.model(model,'bmi')                           #ex: will remove all terms spelled like 'bmi'
+
+# ------ by ASTHMA HISTORY ----
+model.sgrp <- run.adjust.subgroup.model(model,'asthma')                        #ex: will remove all terms spelled like 'asthma'
+
+# ------ by SMOKE HISTORY ----
+model.sgrp <- run.adjust.subgroup.model(model,'smk_status')                     #ex: will remove all terms spelled like 'SMK_STATUS' but not smk_passive
+
+# ------ by ASTHMA CURRENT ----
+model.sgrp <- run.adjust.subgroup.model(model,'asthma')                        #ex: will remove all terms spelled like 'asthma'
+
+
+## ------------- RUN --------------------------------------------------------------------------------------------------
+# --- exposure effect statistics:   MAKE SURE THAT STUDY DUMMY VARS ARE ALREADY CREATED
 run.model(outcome,expo,model.sgrp,family = 'binomial',data,Ncases=T,ref ='lifelines') #ref is specified here
 
 #split model run [ no need to create dummy study variable, but you need to specify the datasource] 
 run.model(outcome,expo,model.sgrp,family = 'binomial',data,Ncases=T,datasources = opals[2]) #ukbiobank opals[2]
 
+## -------- OPTIONAL ---------------------------------------------------------------------
+#----- generate formula based on previously called expo, outcome, model.srgp and data.
+#formula <- run.update.formula(outcome,expo,model.sgrp,data) #[ data = subgroup analysis data]
+#glm.res<-run.meta.glm(formula,family='binomial',ref='lifelines')
+#run.extract.glm.stats(glm.res)
 
-#generate formula based on previously called expo, outcome, model.srgp and data.
-formula <- run.update.formula(outcome,expo,model.sgrp,data) #[ data = subgroup analysis data]
 
-glm.res<-run.meta.glm(formula,family='binomial',ref='lifelines')
-run.extract.glm.stats(glm.res)
+## -------- -DESCRIPTIVE STATS OF THE OUTCOME VARS:  -------------------------------------
+# ---run it for each outcome in a particular subgroup (data)
+run.desc.stats(outcome,data)   
 
 
-################# NA STATS ##########################
-
-#### ex: create NA subset = 'NA.D.GENDER0' if sugroup is GENDER0 (mâle)
-#this function assign NA.D.xxxx on server side and return the name of the assign NA dataframe.
+##-------------- NA STATS OF THE MODEL----------------------------------------------------
+#this function assign NA.D.xxxx on server side and return the name of the assigned NA dataframe.
+formula <- run.update.formula(outcome,expo,model.sgrp,data)
 nadata <- run.NA.glm.subset(formula=formula)
 
-#check number of missing cases
-ds.dim(nadata)
-
-#### run NA stats 
-run.NA.stats('AGE_YRS',iscat=F, na.data = nadata)
-#run.NA.stats('GENDER',na.data= nadata)
-run.NA.stats('PM_BMI_CATEGORIAL',na.data= nadata)
-run.NA.stats('EDU_HIGHEST_2',na.data= nadata)
+#----- run NA stats 
+run.desc.stats('AGE_YRS', data = nadata)
+run.desc.stats('GENDER',data= nadata)
+run.desc.stats('PM_BMI_CATEGORIAL',data= nadata)
+run.desc.stats('EDU_HIGHEST_2',data= nadata)
