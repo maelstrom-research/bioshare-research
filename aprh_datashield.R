@@ -109,10 +109,10 @@ model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+RES_LENGTH+S
 
 
 #######################
-expo <- 'PM25_ESCAPE'
+#expo <- 'PM25_ESCAPE'
 #expo <- 'PM10_ESC'
 #expo <- 'NO2_ESCAPE'
-#expo <- 'PMcoarse_ESCAPE'
+expo <- 'PMcoarse_ESCAPE'
 
 ####################
 outcome <- 'SYM_WHEEZ' 
@@ -152,10 +152,10 @@ nadata <- run.NA.glm.subset(formula=formula)
 ds.dim(nadata)
 
 #### run NA stats 
-run.NA.stats('AGE_YRS',iscat=F, na.data = nadata)
-run.NA.stats('GENDER',na.data= nadata)
-run.NA.stats('PM_BMI_CATEGORIAL',na.data= nadata)
-run.NA.stats('EDU_HIGHEST_2',na.data= nadata)
+run.desc.stats('AGE_YRS',iscat=F, data = nadata)
+run.desc.stats('GENDER',data= nadata)
+run.desc.stats('PM_BMI_CATEGORIAL',data= nadata)
+run.desc.stats('EDU_HIGHEST_2',data= nadata)
 
 
 
