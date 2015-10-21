@@ -585,10 +585,13 @@ bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
       } )
     }
     
-    #correct result: invalid result display total margin
-    res[t2.bad.idx] <- t2d.i[t2.bad.idx]
-    if(with.pooled) res$Pooled <- t2d.i.and.pool$Pooled
+    #correct result: invalid result display total margin only
+    if(!t2.ok) {
+      res[t2.bad.idx] <- t2d.i[t2.bad.idx]
+      if(with.pooled) res$Pooled <- t2d.i.and.pool$Pooled
+    }
     
+    #now compute chisquare test 
     if(chisq.test) {
       chi2 <-if(!t2.ok) {
         'Invalid table(s): all entries of the table must be nonnegative and finite'
