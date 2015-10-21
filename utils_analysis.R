@@ -17,6 +17,12 @@ bioshare.env$extract <- dsBaseClient:::extract
 #pooled mean
 bioshare.env$run.pooled.mean<- dsBaseClient:::getPooledMean
 
+#vectorize list like structure
+bioshare.env$.vectorize <- function(x,subscript,simplify = T) 
+{ 
+  if(simplify) sapply(x,'[[',subscript)
+  else lapply(x,'[[',subscript)
+}
 
 
 #########################################################################################
@@ -219,7 +225,7 @@ bioshare.env$run.dummy.study <- function (data,datasources)
     datashield.rm(ds[-i],effect_name)
     #cat(capture.output(datashield.aggregate(ds,as.name(paste0('meanDS(',effect_name,')'))))) 
   }
-  cat(paste0("You may check stored dummy variables with the following datashield command: ds.colnames('",data,"')"))
+  cat(paste0("You may check the stored dummy variables with the following datashield command: ds.colnames('",data,"')"))
 }
 
 
@@ -441,13 +447,14 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   return(NAsubset)
 }
 
+#####################-----------STATS --------------------####################################
 
+#this function compute desc statistic: table1d for a factor variable or meansd for a continuous variable
+#across all studies and pool the results
 bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
 {
   if(is.null(datasources)) { datasources = findLoginObjects()}
   ds <- datasources
-  
-  .vectorize <- function(x,subscript) {sapply(x,'[[',subscript)}
   
   #update var to na.data$var
   if(!is.null(data)) var<- paste0(data,'$',var)
@@ -508,6 +515,106 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
   res
 }
 
+
+#this function computes 2 x 2 table and chi2 
+bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.percent = F, chisq.test = T,split = F,datasources = NULL) 
+{
+  if(missing(x)) stop ('x variable (character) is required ...',call.=F)
+  if(missing(y)) stop ('y variable (character) is required ...',call.=F)
+  if(is.null(datasources)) datasources = findLoginObjects()
+  ds <- datasources
+  
+  if(is.null(data)) callt2 <- paste0('table2dDS(',x,',',y,')')
+  else callt2 <- paste0('table2dDS(',data,'$',x,',',data,'$',y,')')
+  
+  t2.res <-  datashield.aggregate(ds,as.symbol(callt2))
+  
+  process.result <- function (result)
+  {
+    with.pooled <- length(result) > 1
+    t2.res <- result  #start here
+    
+    t2.mess <- .vectorize(t2.res,'message')
+    t2.bad.idx <- which(grepl('invalid',t2.mess,ignore.case=T))
+    t2.ok <- !(length(t2.bad.idx))
+    
+    t2d.i <- .vectorize(t2.res,subscript='table',simplify=F)
+    
+    #get basic infos
+    cnames <- colnames(t2d.i[[1]])
+    rnames <- row.names(t2d.i[[1]])
+    #combine table
+    if(with.pooled){
+      Pooled <- Reduce('+',t2d.i)
+      t2d.i.and.pool <- c(t2d.i,list(Pooled = Pooled))
+      res <- t2d.i.and.pool
+    }else{
+      res <- t2d.i
+    }
+    
+    # rm margin
+    .rm.margin <- function(x) { as.matrix(x[-nrow(x),-ncol(x)])}
+    t2.nomarg <- lapply(res,.rm.margin)
+    
+    if(row.percent && !col.percent){
+      res <- lapply(t2.nomarg, function(x){
+        p <- prop.table(x,1)*100
+        p.marg<- margin.table(p,1)
+        x.marg <- margin.table(x,1)
+        p <- round(cbind(p,p.marg),2) #prop
+        x <- round(cbind(x,x.marg),2) #count
+        p.x <- paste0(x,'(',p,')')
+        p.x <- data.frame(matrix(p.x,nrow(p),ncol(p)))
+        colnames(p.x) <- cnames
+        row.names(p.x) <- row.names(x)
+        p.x
+      } )
+    }
+    if(col.percent){
+      res <- lapply(t2.nomarg, function(x){
+        p <- prop.table(x,2)*100
+        p.marg <- margin.table(p,2)
+        x.marg <- margin.table(x,2)
+        p <- round(rbind(p,p.marg),2) #prop
+        x <- round(rbind(x,x.marg),2) #count
+        p.x <- paste0(x,'(',p,')')
+        p.x <- data.frame(matrix(p.x,nrow(p),ncol(p)))
+        row.names(p.x) <- rnames
+        colnames(p.x) <- colnames(x)
+        p.x
+      } )
+    }
+    
+    #correct result: invalid result display total margin
+    res[t2.bad.idx] <- t2d.i[t2.bad.idx]
+    if(with.pooled) res$Pooled <- t2d.i.and.pool$Pooled
+    
+    if(chisq.test) {
+      chi2 <-if(!t2.ok) {
+        'Invalid table(s): all entries of the table must be nonnegative and finite'
+      }else{
+        if(with.pooled) {
+          Pooled.data <- t2.nomarg$Pooled
+          try(chisq.test(Pooled.data,correct=F),silent=T)
+        }else{
+          Study.data <- t2.nomarg[[1]]
+          try(chisq.test(Study.data,correct=F),silent=T)
+        }
+      }
+      res <- c(res,list(chi2 = chi2))
+    }
+    return (res)
+  }
+  
+  message <- paste0('\n-----------  ',x,'(row) X ',y,'(col)  ------------')
+  cat(message,'\n\n')
+  if(split) {
+    final <- c()
+    for(i in 1:length(t2.res)){final <- c(final,process.result(t2.res[i])) }
+    final
+  }
+  else process.result(t2.res)
+}
 
 
 ##########################################
