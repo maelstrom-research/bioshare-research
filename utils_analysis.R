@@ -81,33 +81,49 @@ bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
 
 
 ########INTERNAL FUNCTION
-bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,data = NULL, datasources=NULL){
+bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NULL, datasources=NULL){
   
   #subset by sub_by first to generate the first subset
   if(is.null(datasources)) datasources <- findLoginObjects()
   ds <- datasources
   
   #verify data
-  if(is.null(data)) {message('data is not specified ... default table "D" (if available on server side) will be used '); data <- 'D'}
-
-  #Sanity check : subvar should always be a factor
-  subset.class <- checkClass(ds,paste0(data,'$',subvar))
-  if(subset.class != 'factor') stop('subvar must be a categorical or factor type variable ...',call.=F)
+  if(is.null(data)) {stop('Please specify the data(dataframe) to subset',call.=F)}
   
-  #vars.to.subset <- paste0(vars.list,collapse=', ')
-  message(paste0('=> Subsetting selected vars of ',data, ' by ',subvar,'\nWait please do not interrupt!...'))
-  vars<-unique(c(subvar,unlist(vars.list)))
-  cally <- call('subsetDS',dt = data, complt=F, rs=NULL, cs=vars)
-  datashield.assign(ds,'newdt',cally)   #new df with only the variables needed (avoid time consuming)
+  if(is.null(subclass)) {
+    stop('Nothing to do, sublass var is missing required...',call.=F)
+  }else {
+    #Sanity check : subclass should always be a factor
+    subset.class <- checkClass(ds,paste0(data,'$',subclass))
+    if(subset.class != 'factor') stop('subclass must be a categorical or factor type variable ...',call.=F)
+    
+    if (!is.null(vars.list)){
+      vars<-unique(c(subclass,unlist(vars.list)))
+      message(paste0('=> Creating sub classes of  selected vars.list in ',data, ' by ',subclass,'\nWait please do not interrupt!...'))
+      
+      cally <- call('subsetDS',dt = data, complt=F, rs=NULL, cs=vars)
+      datashield.assign(ds,'newdt',cally)   
+      #sublclassing 
+      cally <- call('subsetByClassDS','newdt', subclass)
+      datashield.assign(ds,'subobj',cally)
+      to.rm <- c('newdt','subobj')
+      
+    } else { #sublcass only
+      message(paste0('=> Creating sub classes of all vars in ',data, ' by ',subclass,'\nWait please do not interrupt!...'))
   
-  cally <- call('subsetByClassDS','newdt', subvar)
-  datashield.assign(ds,'subobj',cally)
+      cally <- call('subsetByClassDS',data, subclass)
+      datashield.assign(ds,'subobj',cally)
+      to.rm <- 'subobj'
+    }
+  }
+  
+  #### arranging subclass result in server side
   
   #define infoname
   message('=> Assigning the subsetted dataframe(s) on server side...\nWait please do not interrupt!...')
   cally <- as.name('namesDS(subobj)')
   subinfo<-datashield.aggregate(ds,cally)[[1]] #get names of subsetted object
-  
+    
   #define name of object to be assigned
   subinfobj<-sapply(subinfo,function(x){  #assign new subsetted object in server and return their name
     newname<-paste0(data,'.',sub('\\.level_(\\d+)$','\\1',x))  #transform names
@@ -116,10 +132,9 @@ bioshare.env$run.get.subset<-function(subvar = NULL,vars.list=NULL,data = NULL, 
     return(newname)
   },USE.NAMES = F)
   
-  #adjust name according to new objects
-  #names(subinfobj)<-subinfobj
   
-  to.rm <- c("complt","cs","dt","newdt","rs","subobj")
+  
+  to.rm <- c("complt","cs","dt","rs",to.rm)
   for(x in to.rm) {datashield.rm(ds,x)} #Clean space
   
   message(paste0('-- dataframe ',subinfobj ,' is assigned',collapse='\n'))
@@ -348,7 +363,7 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,...
     glm.stats$Ncases = Nvalid
   }
   
-  glm.stats$results <- paste0(glm.stats$stats[expo,],' [N = ',glm.stats$Ncases,']')
+  glm.stats$results <- paste0(glm.stats$stats[expo,],' (n = ',glm.stats$Ncases,')')
   
   #print glm stats
   cat(glm.stats$formula,'\n')
@@ -370,7 +385,7 @@ bioshare.env$run.extract.glm.stats <- function(glm.result)
       low <- round(x[length(x)-1],3)
       high <- round(x[length(x)],3)
       
-      paste0(OR,' [',low,' - ',high,'] (',pvalue,')')
+      paste0(OR,' [',low,' - ',high,'] (p=',pvalue,')')
     }),stringsAsFactors = F
     )
   }else if (glm.family == 'gaussian'){
@@ -380,7 +395,7 @@ bioshare.env$run.extract.glm.stats <- function(glm.result)
       low <- round(x[length(x)-1],3)
       high <- round(x[length(x)],3)
       
-      paste0(estimate,' [',low,' - ',high,'] (',pvalue,')')
+      paste0(estimate,' [',low,' - ',high,'] (p=',pvalue,')')
     }),stringsAsFactors = F
     )
   }
@@ -477,7 +492,7 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
     
     #put everything together
     rs.tab.with.pooled <- cbind(rs.tab,Pooled)
-    k <- apply(rs.tab.with.pooled,2,function(x) {x<-as.numeric(x); pct <- round(x/x[length(x)]*100,2); paste0(x,'(',pct,')')})
+    k <- apply(rs.tab.with.pooled,2,function(x) {x<-as.numeric(x); pct <- round(x/x[length(x)]*100,2); paste0(pct,'(n = ',x,')')})
     res <- data.frame(k,row.names=row.names(rs.tab),stringsAsFactors=F)
     
   }else if (is.num){ #is numeric
@@ -508,7 +523,7 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
      
     sd.w.p<-round(sqrt(rs.var.with.pooled),2)
     m.w.p <- round(rs.mean.with.pooled,2) 
-    meanSd <- paste0(m.w.p,'(',sd.w.p,') [N = ',validN.w.p,']')
+    meanSd <- paste0(m.w.p,'(',sd.w.p,') (n = ',validN.w.p,')')
   
     res <- data.frame(meanSd,row.names=names.w.p,stringsAsFactors=F)
   }   
@@ -563,7 +578,7 @@ bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
         x.marg <- margin.table(x,1)
         p <- round(cbind(p,p.marg),2) #prop
         x <- round(cbind(x,x.marg),2) #count
-        p.x <- paste0(x,'(',p,')')
+        p.x <- paste0(p,'(n = ',x,')')
         p.x <- data.frame(matrix(p.x,nrow(p),ncol(p)))
         colnames(p.x) <- cnames
         row.names(p.x) <- row.names(x)
@@ -577,7 +592,7 @@ bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
         x.marg <- margin.table(x,2)
         p <- round(rbind(p,p.marg),2) #prop
         x <- round(rbind(x,x.marg),2) #count
-        p.x <- paste0(x,'(',p,')')
+        p.x <- paste0(p,'(n = ',x,')')
         p.x <- data.frame(matrix(p.x,nrow(p),ncol(p)))
         row.names(p.x) <- rnames
         colnames(p.x) <- colnames(x)
