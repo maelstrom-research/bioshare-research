@@ -52,7 +52,7 @@ bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
   for(var in vars.list){
     #compute table2D
     message(paste0('=> Computing chi-square ',var,' X ',subset,'\nDo not interrupt!...'))
-    chi_square<-ds.table2D(x=paste0('D$',var), y=paste0('D$',subset), type=type,warningMessage=F)
+    chi_square<-ds.table2D(x=paste0('D$',var), y=paste0('D$',subset), type=type,warningMessage=F)   ##### <----- TO CHANGE use my functions
     
     #arranging final result
     w<-structure(list(chi_square),.Names=var)
@@ -477,6 +477,7 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
   class.check <- checkClass(ds[1],var) 
   is.num <- class.check %in% c('integer','numeric')
   is.factor <- class.check == 'factor'
+  is.class.null <- class.check == "NULL"
   
   if(is.factor) {
     tocall <- paste0('table1dDS(',var,')')
@@ -509,8 +510,24 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
     
     validN <- rs.length - rs.numna 
     
-    rs.mean.agg <- weighted.mean(rs.mean,validN)
-    rs.var.agg <- weighted.mean(rs.var,validN)
+    .var.pooled <- function(variances,means,weights )
+    {
+      v<- variances
+      m <- means
+      l <- weights
+      l.minus1 <- l-1
+      m.total <- weighted.mean(m,l)
+      err.ss <- sum(l.minus1*v) # overall error sum of squares
+      tg.ss <- sum(l*(m-m.total)^2) # total (overall) group sum of squares
+      l.total <- sum(l)
+      v.total <- (err.ss + tg.ss)/(l.total-1)
+      #s.ag <- sqrt(v.ag)
+      return (v.total)
+    }
+    
+  
+    rs.mean.agg <- weighted.mean(rs.mean,validN,na.rm=T)
+    rs.var.agg <- .var.pooled(rs.var, rs.mean, validN)
     validN.agg <- sum(validN)
     names.w.p <- c(names(ds),'Pooled')
     
@@ -526,7 +543,9 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
     meanSd <- paste0(m.w.p,'(',sd.w.p,') (n = ',validN.w.p,')')
   
     res <- data.frame(meanSd,row.names=names.w.p,stringsAsFactors=F)
-  }   
+  } else if (is.class.null){
+    stop(paste0('No such variable in ',names(ds[1])),call.=F)
+  }  
   res
 }
 
