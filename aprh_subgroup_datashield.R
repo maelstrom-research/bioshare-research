@@ -33,26 +33,26 @@ main.data <- 'D'
 ################## -------------GENERATE THE SUBGROUP DATAFRAMES ----------------------------------------
 
 #---------------subgroup of D by GENDER on server side
-subgroup.names.gender <- run.get.subset(subvar='GENDER',vars.list=myvar,data=main.data)           #run once
+subgroup.names.gender <- run.get.subclass(subclass='GENDER',data=main.data)           #run once
 
 # ------------- subroup of D by DIS_ASTHMA on server side
-subgroup.asthma <- run.get.subset(subvar='DIS_ASTHMA',vars.list=myvar,data=main.data)             #run once
+subgroup.asthma <- run.get.subclass(subclass='DIS_ASTHMA',data=main.data)             #run once
 
 ##------------#BINARIZE BMI CAT--------------------
 # binarize the BMIcat_1_2_3 into BMIcat_0_1 (BMI>=30): 
 run.changelevel('PM_BMI_CATEGORIAL',new.levels=c(0,0,1),new.varname='OBESE_STATUS',data=main.data) #here OBESE_STATUS
 # now compute subgroup on server side 
-subgroup.obese <- run.get.subset(subvar='OBESE_STATUS',vars.list=myvar,data=main.data)    #run once
+subgroup.obese <- run.get.subclass(subclass='OBESE_STATUS',data=main.data)    #run once
 
 
 ##-----------BINARIZE SMOKE STATUS (history) ------------------
 run.changelevel('SMK_STATUS',new.levels=c(0,1,1),new.varname='SMOKE_EVER',data=main.data)
 #compute subgroup on server side
-subgroup.smoke <- run.get.subset(subvar='SMOKE_EVER',vars.list=myvar,data=main.data)      #run once
+subgroup.smoke <- run.get.subclass(subclass='SMOKE_EVER',data=main.data)      #run once
 
 
 ##-----------subgroup of D by MEDI_ASTHMA_COPD
-subgroup.astm.curr <- run.get.subset('DIS_ASTHMA_MEDS',myvar,main.data)                   #run once
+subgroup.astm.curr <- run.get.subclass('DIS_ASTHMA_MEDS',main.data)                   #run once
 
 ##############---------- SELECT THE DATA THAT WILL BE USED FOR THE CORRESPONDING SUBGROUP  ANALYSIS ----------------------
 #specify the name (character) of the dataframe that resulted from run.get.subset ex: D.GENDER0 or D.GENDER1
@@ -140,10 +140,10 @@ model.sgrp <- run.adjust.subgroup.model(model,'asthma')                        #
 
 ## ------------- RUN --------------------------------------------------------------------------------------------------
 # --- exposure effect statistics:   MAKE SURE THAT STUDY DUMMY VARS ARE ALREADY CREATED
-run.model(outcome,expo,model.sgrp,family = 'binomial',data,Ncases=T,ref ='lifelines') #ref is specified here
+run.model(outcome,expo,model.sgrp,family = 'binomial',data,Ncases=T,pval = F, ref ='lifelines') #ref is specified here
 
 #split model run [ no need to create dummy study variable, but you need to specify the datasource] 
-run.model(outcome,expo,model.sgrp,family = 'binomial',data,Ncases=T,datasources = opals[2]) #ukbiobank opals[2]
+run.model(outcome,expo,model.sgrp,family = 'binomial',data,Ncases=T, pval = F, datasources = opals[2]) #ukbiobank opals[2]
 
 ## -------- OPTIONAL ---------------------------------------------------------------------
 #----- generate formula based on previously called expo, outcome, model.srgp and data.
