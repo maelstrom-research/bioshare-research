@@ -128,10 +128,10 @@ run.dummy.study(data) #run once
 datashield.symbols(opals) # check objects on server side
 
 #exposure effect statistics  [see data = 'D' for main analysis]
-run.model(outcome,expo,model,family = 'binomial',data,Ncases=T,ref ='lifelines') #ref is specified here
+run.model(outcome,expo,model,family = 'binomial',data,Ncases=T,pval = F, ref ='lifelines') #ref is specified here
 
 #split model run [ no need to create dummy study variable, but you need to specify the datasource] 
-run.model(outcome,expo,model,family = 'binomial',data,Ncases=T,datasources = opals[2]) #ukbiobank opals[2]
+run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, datasources = opals[2]) #ukbiobank opals[2]
 
 
 
