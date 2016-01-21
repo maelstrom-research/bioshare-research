@@ -668,11 +668,12 @@ bioshare.env$run.close<-function(all=F)
   objs <- ls(name=.GlobalEnv)
   if(length(objs)){
     for(obj in objs){
-      obj<- eval(parse(text=obj))
-      if (is.list(obj) && (class(obj[[1]]) == 'opal')){
+      obj.val<- eval(parse(text=obj))
+      if (is.list(obj.val) && (class(obj.val[[1]]) == 'opal')){
         message('Closing opal(s) server connection(s)')
-        obj.opal <- obj
+        obj.opal <- obj.val
         datashield.logout(obj.opal)
+        rm(list= obj,pos=search())
         cat(paste0( names(obj.opal),' server is disconnected...'),sep='\n')
       }
     }
