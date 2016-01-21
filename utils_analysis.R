@@ -335,7 +335,7 @@ bioshare.env$run.update.formula<-function(outcome,expo,model,data)
 #param ...= any params that go to glm (except formula) (i.e: offset, data, weights,wiewIter, datasource)
 #param Ncases = a boolean (TRUE or FALSE(default)) wether to compute N cases or not in the final result  
 
-bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,...)
+bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pval=FALSE, ...)
 {
   if(missing(outcome)) stop('outcome is required...',call.=F)
   if(missing(expo)) stop('exposition variable is required...',call.=F)
@@ -352,18 +352,12 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,...
   glm.ok <-  !( glm.err || is.null(glm.res)) 
   
   #extract glm stats and process result
-  if(glm.ok) glm.stats<-run.extract.glm.stats(glm.res)
+  if(glm.ok) glm.stats<-run.extract.glm.stats(glm.res,Ncases=Ncases,pval=pval)
   else if (glm.err) return(message(glm.res))
   else return(glm.res)
   
+  glm.stats$results <- glm.stats$stats[expo,]
   
-  #compute N valid (complete cases)
-  if(Ncases) {
-    Nvalid <- glm.res$nsubs
-    glm.stats$Ncases = Nvalid
-  }
-  
-  glm.stats$results <- paste0(glm.stats$stats[expo,],' (n = ',glm.stats$Ncases,')')
   
   #print glm stats
   cat(glm.stats$formula,'\n')
@@ -373,30 +367,41 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,...
 
 ##############################################
 #function to extract glm result :P_OR(p.value) 
-bioshare.env$run.extract.glm.stats <- function(glm.result)
+bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALSE)
 {
   if(missing(glm.result)) stop('Please provide a valid glm result...',call.=F)
   glm.family <- glm.result$family$family
   glm.coef <- coef(glm.result)
   if(grepl("poisson|binomial", glm.family)){
-    stats <- data.frame(OR_with_pvalue = apply(glm.coef,1,function(x) {
-      OR <- round(x['P_OR'],3)
-      pvalue<- format(x['p-value'],digits=4) ; pvalue <- if(as.numeric(pvalue)< 2.2e-16) {"<2.2e-16"}else{pvalue}
-      low <- round(x[length(x)-1],3)
-      high <- round(x[length(x)],3)
+    stats <- data.frame(OR_CI = apply(glm.coef,1,function(x) {
+        OR <- round(x['P_OR'],3)
+        pvalue<- format(x['p-value'],digits=4) ; pvalue <- if(as.numeric(pvalue)< 2.2e-16) {"<2.2e-16"}else{pvalue}
+        low <- round(x[length(x)-1],3)
+        high <- round(x[length(x)],3)
+        
+        res.extract <- paste0(OR,' [',low,' - ',high,']')
+        #add N valid (complete cases)
+        if(Ncases) {res.extract <- paste0(res.extract,' (n = ',glm.result$nsubs,')')}
+        #add pvalue in result
+        if(pval) {res.extract <- paste0(res.extract, '(p=',pvalue,')')}
+        return (res.extract)
       
-      paste0(OR,' [',low,' - ',high,'] (p=',pvalue,')')
-    }),stringsAsFactors = F
+      }),stringsAsFactors = F
     )
   }else if (glm.family == 'gaussian'){
-    stats <- data.frame(Estimate_with_pvalue = apply(glm.coef,1,function(x) {
-      estimate <- round(x['Estimate'],3)
-      pvalue<- format(x['p-value'],digits=4) ; pvalue <- if(as.numeric(pvalue)< 2.2e-16) {"<2.2e-16"}else{pvalue}
-      low <- round(x[length(x)-1],3)
-      high <- round(x[length(x)],3)
-      
-      paste0(estimate,' [',low,' - ',high,'] (p=',pvalue,')')
-    }),stringsAsFactors = F
+    stats <- data.frame(Estimate_CI = apply(glm.coef,1,function(x) {
+        estimate <- round(x['Estimate'],3)
+        pvalue<- format(x['p-value'],digits=4) ; pvalue <- if(as.numeric(pvalue)< 2.2e-16) {"<2.2e-16"}else{pvalue}
+        low <- round(x[length(x)-1],3)
+        high <- round(x[length(x)],3)
+        
+        res.extract <- paste0(estimate,' [',low,' - ',high,']')
+        #add N valid (complete cases)
+        if(Ncases) {res.extract <- paste0(res.extract,' (n = ',glm.result$nsubs,')')}
+        #add pvalue in result
+        if(pval) {res.extract <- paste0(res.extract, '(p=',pvalue,')')}
+        return (res.extract)
+      }),stringsAsFactors = F
     )
   }
   glm.coef[2,dim(glm.coef)[2]-1]
