@@ -356,28 +356,29 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pva
   else if (glm.err) return(message(glm.res))
   else return(glm.res)
   
-  glm.stats$results <- glm.stats$stats[expo,]
+  glm.stats$results <- glm.stats$stats[expo,,F]   #<--display variable names and statistics
   
   
   #print glm stats
-  cat(glm.stats$formula,'\n')
-  cat(glm.stats$results)
+  cat(glm.stats$formula,'\n\n')
+  print(glm.stats$results)
+  return(invisible(glm.stats$results))
 }
 
 
 ##############################################
 #function to extract glm result :P_OR(p.value) 
-bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALSE)
+bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALSE,rdigit =3)
 {
   if(missing(glm.result)) stop('Please provide a valid glm result...',call.=F)
   glm.family <- glm.result$family$family
   glm.coef <- coef(glm.result)
   if(grepl("poisson|binomial", glm.family)){
     stats <- data.frame(OR_CI = apply(glm.coef,1,function(x) {
-        OR <- round(x['P_OR'],3)
+        OR <- round(x['P_OR'],rdigit)
         pvalue<- format(x['p-value'],digits=4) ; pvalue <- if(as.numeric(pvalue)< 2.2e-16) {"<2.2e-16"}else{pvalue}
-        low <- round(x[length(x)-1],3)
-        high <- round(x[length(x)],3)
+        low <- round(x[length(x)-1],rdigit)
+        high <- round(x[length(x)],rdigit)
         
         res.extract <- paste0(OR,' [',low,' - ',high,']')
         #add N valid (complete cases)
@@ -390,10 +391,10 @@ bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALS
     )
   }else if (glm.family == 'gaussian'){
     stats <- data.frame(Estimate_CI = apply(glm.coef,1,function(x) {
-        estimate <- round(x['Estimate'],3)
+        estimate <- round(x['Estimate'],rdigit)
         pvalue<- format(x['p-value'],digits=4) ; pvalue <- if(as.numeric(pvalue)< 2.2e-16) {"<2.2e-16"}else{pvalue}
-        low <- round(x[length(x)-1],3)
-        high <- round(x[length(x)],3)
+        low <- round(x[length(x)-1],rdigit)
+        high <- round(x[length(x)],rdigit)
         
         res.extract <- paste0(estimate,' [',low,' - ',high,']')
         #add N valid (complete cases)
