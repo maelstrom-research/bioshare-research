@@ -85,7 +85,7 @@ model<-'AGE_YRS+GENDER+EDU_HIGHEST_2+INCOME'
 
 # model_3(Adjusted for age, sex, BMI, highest level of education, and smoking status, pack-years smoked,>>..  <-
 #>>...length at baseline residence, exposure to second-hand smoke, and self-declared allergies)    				
-model <- 'AGE_YRS+GENDER+EDU_HIGHEST_2+INCOME+SMK_STATUS+RES_LENGTH+SMK_PASSIVE_ALL' #+SMK_PACKYRS
+model <- 'AGE_YRS+GENDER+EDU_HIGHEST_2+INCOME+SMK_STATUS+SMK_PASSIVE_ALL+SEASONALITY'
 
 ###############
 #other models to test: model2 -->->->->-> model3
