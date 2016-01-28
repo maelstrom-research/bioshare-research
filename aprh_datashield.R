@@ -78,14 +78,14 @@ lapply(result.part2,function(x){ format(x$chi2Test$pooled$p.value,digits=5)})
 
 ####################### define models [model1, model2, model3]
 ###model_1(age ajusted)                                                                                     <-
-model<-'AGE_YRS'
+model<-'AGE_YRS+GENDER'
 
 #model_2(Ajusted for age, sex, BMI, highest level of education, and smoking status)                         <-
-model<-'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS'
+model<-'AGE_YRS+GENDER+EDU_HIGHEST_2+INCOME'
 
 # model_3(Adjusted for age, sex, BMI, highest level of education, and smoking status, pack-years smoked,>>..  <-
 #>>...length at baseline residence, exposure to second-hand smoke, and self-declared allergies)    				
-model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+RES_LENGTH+SMK_PASSIVE_ALL' #+SMK_PACKYRS
+model <- 'AGE_YRS+GENDER+EDU_HIGHEST_2+INCOME+SMK_STATUS+RES_LENGTH+SMK_PASSIVE_ALL' #+SMK_PACKYRS
 
 ###############
 #other models to test: model2 -->->->->-> model3
@@ -109,29 +109,29 @@ model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+RES_LENGTH+S
 
 
 #######################
-#expo <- 'PM25_ESCAPE'
+expo <- 'PM25_ESCAPE'
 #expo <- 'PM10_ESC'
 #expo <- 'NO2_ESCAPE'
-expo <- 'PMcoarse_ESCAPE'
+#expo <- 'PMcoarse_ESCAPE'
 
 ####################
-outcome <- 'SYM_WHEEZ' 
+#outcome <- 'SYM_WHEEZ' 
 #outcome <- 'SYM_SBREATH'
 #outcome <- 'SYM_PHLEGM_UP'
 #outcome <- 'SYM_PHLEGM_UP_FREQ'
 #outcome <- 'SYM_PHLEGM_DAY'
 #outcome <- 'SYM_PHLEGM_DAY_FREQ'
-#outcome <- 'MEDI_ASTHMA_COPD'
+outcome <- 'MEDI_ASTHMA_COPD'
 
 #pooled model to run [first create dummy study variables in server side by running run.dummy() once]
 run.dummy.study(data) #run once 
 datashield.symbols(opals) # check objects on server side
 
 #exposure effect statistics  [see data = 'D' for main analysis]
-run.model(outcome,expo,model,family = 'binomial',data,Ncases=T,pval = F, ref ='lifelines') #ref is specified here
+run.model(outcome,expo,model,family = 'binomial',data,Ncases=T,pval = F, ref ='lifelines',check=F) #ref is specified here
 
 #split model run [ no need to create dummy study variable, but you need to specify the datasource] 
-run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, datasources = opals[2]) #ukbiobank opals[2]
+run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, datasources = opals[2],check=F) #ukbiobank opals[2]
 
 
 
