@@ -200,11 +200,11 @@ bioshare.env$run.changelevel <- function(var,new.levels,new.varname=NULL,data=NU
 
 
 #######################################################################
-# this function remove the sugroup term in original model: useful for subgroup analysis
+# this function remove the term in original model
 
-bioshare.env$run.adjust.subgroup.model <- function(model,subgroup){
+bioshare.env$run.adjust.model <- function(model,term){
   x <- unlist(strsplit(model,'\\+'))
-  x.ind <- which(sapply(x,function(k) grepl(subgroup,k,ignore.case=T)))
+  x.ind <- which(sapply(x,function(k) grepl(term,k,ignore.case=T)))
   if(length(x.ind)) paste0(x[-x.ind],collapse='+') 
   else paste0(x,collapse='+')
 } 
