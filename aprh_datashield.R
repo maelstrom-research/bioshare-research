@@ -12,11 +12,12 @@ library(datashieldclient)
 library(dsBetaTestClient)
 
 #variables need of aprh
-myvar<-list('ADM_YRINT','AGE_YRS','AGE_YRS_CATEGORICAL','GENDER','EDU_HIGHEST_2','WORK_STATUS_CURRENT','SMK_STATUS','SMK_TBC_CURRENT','SMK_PACKYRS',
+myvar<-list('AGE_YRS','AGE_YRS_CATEGORICAL','GENDER','EDU_HIGHEST_2','INCOME','WORK_STATUS_CURRENT','SMK_STATUS','SMK_TBC_CURRENT','SMK_PACKYRS',
             'SMK_PASSIVE_HOME','SMK_PASSIVE_WORK','SMK_PASSIVE_ALL','SMK_PASSIVE_TIME','PM_BMI_CONTINUOUS','PM_BMI_CATEGORIAL','DIS_ASTHMA','DIS_ALLERG',
-            'MEDI_ASTHMA_COPD','DIS_ASTHMA_MEDS','DIS_COPD','DIS_COPD_MEDS','DIS_ARRHY','DIS_AMI','DIS_CVA','DIS_ANGINA','DIS_DIAB','MEDI_DIAB','DIS_HBP',
-            'PM_FEV1','PM_FEVC','PM_PEF','SYM_WHEEZ','SYM_SBREATH','NO2_ESCAPE','PM25_ESCAPE','PM25abs_ESC','PM10_ESC','NO2bg_ESCAPE','PMcoarse_ESCAPE',
-            'RES_LENGTH','PM10_07_EU','NO2_06_EU','NO2_07_EU','NO2_05_EU','SYM_PHLEGM_UP','SYM_PHLEGM_DAY','SYM_PHLEGM_UP_FREQ','SYM_PHLEGM_DAY_FREQ')
+            'MEDI_ASTHMA_COPD','DIS_ASTHMA_MEDS','DIS_COPD','DIS_COPD_MEDS','PM_FEV1','PM_FEVC','PM_PEF','SYM_WHEEZ','SYM_WHEEZ_NOCOLD','SYM_SBREATH',
+            'SYM_SBREATH_WALK','SYM_BREATH_PRB','SYM_BREATH_PRB_FREQ','SYM_PHLEGM_UP','SYM_PHLEGM_DAY','SYM_PHLEGM_UP_FREQ','SYM_PHLEGM_DAY_FREQ',
+            'SYM_COUGH_UP','SYM_COUGH_DAY', 'SYM_COUGH_UP_FREQ','SYM_COUGH_DAY_FREQ', 'NO2_ESCAPE','PM25_ESCAPE','PM25abs_ESC','PM10_ESC',
+            'NO2bg_ESCAPE','PMcoarse_ESCAPE','RES_LENGTH')
 
 #load loggin information
 #load('/home/datashield/aprh/logindata.aprh.rda')
@@ -43,12 +44,15 @@ confounding1 <- list('AGE_YRS','SMK_PACKYRS','RES_LENGTH')
 
 ####################
 outcome <- 'SYM_WHEEZ' 
+#outcome <- 'SYM_WHEEZ_NOCOLD'
 #outcome <- 'SYM_SBREATH'
+#outcome <- 'SYM_SBREATH_WALK'
+#outcome <- 'SYM_BREATH_PRB'
+#outcome <- 'SYM_BREATH_PRB_FREQ' ###Note: not in results table
 #outcome <- 'SYM_PHLEGM_UP'
 #outcome <- 'SYM_PHLEGM_UP_FREQ'
 #outcome <- 'SYM_PHLEGM_DAY'
 #outcome <- 'SYM_PHLEGM_DAY_FREQ'
-#outcome <- 'MEDI_ASTHMA_COPD'
 
 result.part1<-list()
 for (conf in confounding1){
@@ -76,16 +80,22 @@ lapply(result.part2,function(x){ format(x$chi2Test$pooled$p.value,digits=5)})
 ##            running some regressions :multivariate                           ##
 #################################################################################
 
-####################### define models [model1, model2, model3]
-###model_1(age ajusted)                                                                                     <-
+####################### define models [model_1, model_2a, model_2b, model_3a, model_3b]
+###model_1(adjusted for age and sex)                                                                                     <-
 model<-'AGE_YRS+GENDER'
 
-#model_2(Ajusted for age, sex, BMI, highest level of education, and smoking status)                         <-
-model<-'AGE_YRS+GENDER+EDU_HIGHEST_2+INCOME'
+#model_2a(adjusted for age, sex, bmi, highest level of education)                         <-
+model<-'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2'
 
-# model_3(Adjusted for age, sex, BMI, highest level of education, and smoking status, pack-years smoked,>>..  <-
-#>>...length at baseline residence, exposure to second-hand smoke, and self-declared allergies)    				
-model <- 'AGE_YRS+GENDER+EDU_HIGHEST_2+INCOME+SMK_STATUS+RES_LENGTH+SMK_PASSIVE_ALL' #+SMK_PACKYRS
+#model_2b(adjusted for age, sex, bmi, highest level of education and household income)    
+model<-'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+INCOME'
+
+# model_3a(adjusted for age, sex, bmi, highest level of education, smoking status, and exposure to second-hand tobacco smoke)     <-				
+model <-'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_ALL'
+
+# model_3b(adjusted for age, sex, bmi, highest level of education, household income, smoking status, and exposure to second-hand tobacco smoke)     <-
+model <-'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+INCOME+SMK_STATUS+SMK_PASSIVE_ALL'
+
 
 ###############
 #other models to test: model2 -->->->->-> model3
@@ -115,13 +125,16 @@ expo <- 'PM25_ESCAPE'
 #expo <- 'PMcoarse_ESCAPE'
 
 ####################
-#outcome <- 'SYM_WHEEZ' 
+outcome <- 'SYM_WHEEZ' 
+#outcome <- 'SYM_WHEEZ_NOCOLD'
 #outcome <- 'SYM_SBREATH'
+#outcome <- 'SYM_SBREATH_WALK'
+#outcome <- 'SYM_BREATH_PRB'
+#outcome <- 'SYM_BREATH_PRB_FREQ' ###Note: not in results table
 #outcome <- 'SYM_PHLEGM_UP'
 #outcome <- 'SYM_PHLEGM_UP_FREQ'
 #outcome <- 'SYM_PHLEGM_DAY'
 #outcome <- 'SYM_PHLEGM_DAY_FREQ'
-outcome <- 'MEDI_ASTHMA_COPD'
 
 #pooled model to run [first create dummy study variables in server side by running run.dummy() once]
 run.dummy.study(data) #run once 
