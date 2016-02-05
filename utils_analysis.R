@@ -374,7 +374,7 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pva
   else return(glm.res)
   
   glm.stats$results <- glm.stats$stats[expo,,F]   #<--display variable names and statistics
-  result <- data.frame(glm.stats$results,row.names=gsub('\\s+','',paste(outcome,'~...+',expo)))
+  result <- data.frame(glm.stats$results,row.names=gsub('\\s+','',paste(outcome,'~...',expo)))
   
   #print glm stats
   cat(glm.stats$formula,'\n\n')
