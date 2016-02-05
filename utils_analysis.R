@@ -150,10 +150,9 @@ bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NU
     return(newname)
   },USE.NAMES = F)
   
-  
-  
   to.rm <- c("complt","cs","dt","rs",to.rm)
-  for(x in to.rm) {datashield.rm(ds,x)} #Clean space
+  #Clean space
+  run.clean(to.rm,datasources=ds)
   
   message(paste0('-- dataframe ',subinfobj ,' is assigned',collapse='\n'))
   info <- paste0("ds.colnames('",subinfobj,"')",collapse=' OR ')
@@ -254,10 +253,10 @@ bioshare.env$run.dummy.study <- function (data,datasources)
     datashield.assign(ds[i],data,as.symbol(callcbind))
     datashield.assign(ds[-i],data,as.symbol(callcbind))
     
-    datashield.rm(ds[i],effect_name)
-    datashield.rm(ds[-i],effect_name)
-    #cat(capture.output(datashield.aggregate(ds,as.name(paste0('meanDS(',effect_name,')'))))) 
   }
+  #clean server side
+  run.clean(names(ds),datasources=ds)
+  
   cat(paste0("You may check the stored dummy variables with the following datashield command: ds.colnames('",data,"')"))
 }
 
@@ -478,12 +477,13 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   
   #clean server workspace
   to_rm <- c("cc","complt","cs","dt","lg" , "rs", "th","varname","RD")
-  invisible(sapply(to_rm,function(x) datashield.rm(ds,x)))
+  run.clean(to_rm,datasources=ds)
+  
   #info to user
   cat(paste0("You may check the assigned ",NAsubset," dataframe with the following datashield commands: 
    datashield.symbols(opals), ds.colnames('",NAsubset,"') AND ds.dim('",NAsubset,"')")) 
   
-  return(NAsubset)
+  return(invisible(NAsubset))
 }
 
 #####################-----------STATS --------------------####################################
@@ -679,6 +679,24 @@ bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
 
 
 ##########################################
+
+#clean workspace server side
+bioshare.env$run.clean <- function(x,all=F,datasources=NULL)
+{
+  if(all) { 
+    call <- 'list = ls()'
+  }else{
+    if (missing(x)) {stop('arg x is required',call.=F)}
+    quote.x <- paste0("'",x,"'",collapse=',')
+    call <- paste0('list =c(',quote.x,')')
+  }
+  if(is.null(datasources)) datasources = findLoginObjects()
+  ds <- datasources
+  
+  datashield.rm(ds,as.symbol(call))
+}
+
+
 
 #close everything
 bioshare.env$run.close<-function(all=F)
