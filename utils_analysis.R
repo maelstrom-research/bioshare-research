@@ -24,6 +24,24 @@ bioshare.env$.vectorize <- function(x,subscript,simplify = T)
   else lapply(x,'[[',subscript)
 }
 
+#function get vars from opal
+bioshare.env$var.assign<-function(opal,datasource,table,variables=NULL)
+{
+  datafile<-paste0(datasource, ".", table)
+  if(length(variables)==1){
+    variable<-paste0(datafile,':',variables)
+    data.err <- try(opal.assign(opal,'D', variable,missings=T),silent = T)
+  }else{
+    data.err <- try(opal.assign(opal,'D', datafile,variables,missings=T),silent = T)
+  }
+  
+  if(inherits(data.err,'try-error')) { 
+    message(paste0('-- The required data is not assigned\n'),(data.err),'-- Check the error message and try again!')
+  }else { cat(paste0('The required data from ', datafile,' was correctly assigned.'))}
+  
+  var.value<-opal.execute(opal,'D')
+  return (var.value)
+}
 
 #########################################################################################
 #    analytics functions here below 
@@ -317,7 +335,7 @@ bioshare.env$run.update.formula<-function(outcome,expo,model,data)
   if(length(missing.arg)>1) stop(paste0(missing.call,' are required'),call.=F)
   else if (length(missing.arg)==1) stop(paste0(missing.call,' is required'),call.=F)
   
-  fm <-  paste0(data,'$',outcome,'~',data,'$',model,'+',expo)
+  fm <-  ifelse(!(is.null(model) || model ==''),paste0(data,'$',outcome,'~',data,'$',model,'+',expo),paste0(data,'$',outcome,'~',data,'$',expo))
   fm <- gsub('+',paste0('+',data,'$'),fm,fixed=T)
   fm <- gsub('*',paste0('*',data,'$'),fm,fixed=T)  
   fm
