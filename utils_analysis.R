@@ -716,7 +716,7 @@ bioshare.env$run.close<-function(all=F)
     }
   }
 
- if(as.logical(all)) rm(list=objs,envir=.GlobalEnv)
+ if(as.logical(all)) rm(list=ls(name=.GlobalEnv),envir=.GlobalEnv)
  else rm(bioshare.env,pos=search())  
  detach(bioshare.env,pos=search())
  cat('bioshare environnment is now detached from memory...')  
