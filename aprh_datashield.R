@@ -13,7 +13,7 @@ library(dsBetaTestClient)
 
 #variables need of aprh
 myvar<-list('AGE_YRS','AGE_YRS_CATEGORICAL','GENDER','EDU_HIGHEST_2','WORK_STATUS_CURRENT','SMK_STATUS','SMK_TBC_CURRENT','INCOME',
-            'SMK_PASSIVE_ALL','SMK_PASSIVE_TIME','PM_BMI_CONTINUOUS','PM_BMI_CATEGORIAL','DIS_ASTHMA','MEDI_ASTHMA_COPD','DIS_COPD','NO2_ESCAPE',
+            'SMK_PASSIVE_ALL','SMK_PASSIVE_TIME','PM_BMI_CONTINUOUS','PM_BMI_CATEGORIAL','MEDI_ASTHMA_COPD','NO2_ESCAPE',
             'PM25_ESCAPE','PM10_ESC','PMcoarse_ESCAPE','SYM_WHEEZ','SYM_WHEEZ_NOCOLD','SYM_SBREATH','SYM_SBREATH_WALK','SYM_BREATH_PRB',
             'SYM_PHLEGM_UP','SYM_PHLEGM_UP_FREQ','SYM_PHLEGM_DAY','SYM_PHLEGM_DAY_FREQ','SYM_COUGH_UP','SYM_COUGH_UP_FREQ','SYM_COUGH_DAY','SYM_COUGH_DAY_FREQ'
             )
@@ -23,7 +23,7 @@ load('login-aprh.rda')
 #study<-c('lifelines','ukb')
 
 #login to datashield and assign data to 'D' as default
-opals <- datashield.login(logins=logindata,assign=TRUE)
+opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 
 
 ########################     DATA THAT WILL BE USED FOR THE MAIN ANALYSIS      ############
@@ -71,7 +71,7 @@ outcome <- 'SYM_WHEEZ'
 #outcome <- 'SYM_PHLEGM_UP_FREQ'
 #outcome <- 'SYM_PHLEGM_DAY'
 #outcome <- 'SYM_PHLEGM_DAY_FREQ'
-#outcome <- 'SYM_WHEEZ_EXT'
+#outcome <- 'SYM_SBREATH_EXT'
 
 #pooled model to run [first create dummy study variables in server side by running run.dummy() once]
 run.dummy.study(data) #run once 
