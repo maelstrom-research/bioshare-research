@@ -374,12 +374,12 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pva
   else return(glm.res)
   
   glm.stats$results <- glm.stats$stats[expo,,F]   #<--display variable names and statistics
-  
+  result <- data.frame(glm.stats$results,row.names=gsub('\\s+','',paste(outcome,'~...+',expo)))
   
   #print glm stats
   cat(glm.stats$formula,'\n\n')
-  print(glm.stats$results)
-  return(invisible(glm.stats$results))
+  print(result)
+  return(invisible(result))
 }
 
 
@@ -426,6 +426,46 @@ bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALS
   formula <-  gsub('\\s+',' ',formula(glm.result)) #fix spaces in formula
   list(formula = formula, stats = stats)
 }
+
+
+################################################################
+#run.stack.glm.by function will run many glms and return a stack of all the glm compute based on the <by> params
+#ex: if by = 'expo', .glist will compute a list of glm by 'expo'
+#param <X> = the list of names (charcter) to compute by
+#param <expo> = the expo var (in character) 
+#param <outcome> = the outcome var (in character)
+#param <model> = the model object
+#param <data> = the data where the variables the reside
+#param <fam> = family of the glm
+#param <ref> = the study selected as reference in a heterogeneity model
+#param <by> = the name in charactr of the option to compute the list. 
+#ex: <by> can be either 'expo' to compute the list of glm by expo var 
+#,this implies that <X> is a vector or a list of expo var names.
+#<by> can be either 'expo','outcome', or 'model'
+# EX: 
+#expo.c <- c('expo1','expo2','expo3')
+#glm.stack <- run.stack.glm.by(expo.c,outcome=outcome,model=model,data='D',fam='binomial',by='expo',datasources=opals[1])
+
+bioshare.env$run.stack.glm.by <- function(X,expo,outcome,model,data,fam,ref,by,datasources,...)
+{
+  if(missing(by)) {stop('[by] is mandatory',call.=F)}
+  else{info <- by}
+  
+  if(is.null(datasources)) datasources = findLoginObjects()
+  ds <- datasources
+  
+  .ml <- function(x) {
+    if(grepl('expo',info,T)) {expo <- x}
+    else if(grepl('outcome',info,T)) {outcome <- x}
+    else if (grepl('model',info,T)) {model <- x}
+    else {stop('[by] should be either "expo","outcome" or "model"',call.=F)}
+    #formul <- run.update.formula(outcome,expo,model,data)
+    #run.meta.glm(formul,family=fam,ref=ref,datasources = datasources,...) 
+    run.model(outcome,expo,model,family = fam,data,Ncases=T,pval = F, ref =ref,datasources = ds,...)
+  }
+  Reduce(rbind,lapply(X,.ml))
+}
+
 
 
 #################################################################
