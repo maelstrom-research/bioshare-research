@@ -446,7 +446,7 @@ bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALS
 #expo.c <- c('expo1','expo2','expo3')
 #glm.stack <- run.stack.glm.by(expo.c,outcome=outcome,model=model,data='D',fam='binomial',by='expo',datasources=opals[1])
 
-bioshare.env$run.stack.glm.by <- function(X,expo,outcome,model,data,fam,ref,by,datasources,...)
+bioshare.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,datasources,...)
 {
   if(missing(by)) {stop('[by] is mandatory',call.=F)}
   else{info <- by}
@@ -458,12 +458,22 @@ bioshare.env$run.stack.glm.by <- function(X,expo,outcome,model,data,fam,ref,by,d
     if(grepl('expo',info,T)) {expo <- x}
     else if(grepl('outcome',info,T)) {outcome <- x}
     else if (grepl('model',info,T)) {model <- x}
-    else {stop('[by] should be either "expo","outcome" or "model"',call.=F)}
     #formul <- run.update.formula(outcome,expo,model,data)
     #run.meta.glm(formul,family=fam,ref=ref,datasources = datasources,...) 
     run.model(outcome,expo,model,family = fam,data,Ncases=T,pval = F, ref =ref,datasources = ds,...)
   }
-  Reduce(rbind,lapply(X,.ml))
+  
+  if(grepl('expo',info,T)) {
+    result <- Reduce(rbind,lapply(expo,.ml))
+  }else if(grepl('outcome',info,T)) {
+    result <- Reduce(rbind,lapply(outcome,.ml))
+  }
+  else if (grepl('model',info,T)) {
+    result <- Reduce(rbind,lapply(model,.ml))
+  }else {
+    stop('[by] should be either "expo","outcome" or "model"',call.=F)
+  }
+   return (result)
 }
 
 
