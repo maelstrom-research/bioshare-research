@@ -101,7 +101,7 @@ bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
 ########INTERNAL FUNCTION
 bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NULL, datasources=NULL){
   
-  #subset by sub_by first to generate the first subset
+  
   if(is.null(datasources)) datasources <- findLoginObjects()
   ds <- datasources
   
@@ -479,8 +479,14 @@ bioshare.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,dat
 
 
 #################################################################
-#DOC TO DO 
-#
+#This function takes either a formula for a glm or a result from a run glm,
+#then computes a dataframe for NA cases in the glm. this is similar to na.action = T in R glm
+#the dataframe comprises only the variables defined in the glm
+#param <formula>: a glm formula (in character) to compute from
+#param <glm.result> (optional if formula is given): a result from a run glm. This is optional when formula is given
+#param <NAsubset> (optional): the name of the newly created dataframe.
+#param <datasources> (optional): the datasources (study opal infos) where to do carry the computation. If not specified it will use all server(s)
+
 bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,datasources=NULL)
 {
   mf <- match.call(expand.dots = FALSE)
@@ -510,7 +516,7 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   vars.names<-extract(vars.list)$elements
   
   # create a df for the selected variables
-  cally<-paste0('dataframeDS(list(',paste0(vars.2df,collapse=','),')',',NULL,FALSE,TRUE,','c(',paste0("'",vars.names,"'",collapse=','),')',',TRUE,FALSE)')
+  cally<-paste0('dataframeDS(cbind(',paste0(vars.2df,collapse=','),')',',NULL,FALSE,TRUE,','c(',paste0("'",vars.names,"'",collapse=','),')',',TRUE,FALSE)')
   datashield.assign(ds,'RD',as.symbol(cally))
   
   # define complete cases boolean var
@@ -535,6 +541,61 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   
   return(invisible(NAsubset))
 }
+
+############################################################################
+#This function takes either a formula for a glm or a result from a run glm,
+#then computes a dataframe for COMPLETE CASES in the glm. this is similar to completecases in R glm
+#the dataframe comprises only the variables defined in the glm
+#param <formula>: a glm formula (in character) to compute from
+#param <glm.result> (optional if formula is given): a result from a run glm. This is optional when formula is given
+#param <NAsubset> (optional): the name of the newly created dataframe.
+#param <datasources> (optional): the datasources (study opal infos) where to do carry the computation. If not specified it will use all server(s)
+
+bioshare.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,datasources=NULL)
+{
+  mf <- match.call(expand.dots = FALSE)
+  arg.names <- names(mf)
+  
+  if ((! 'glm.result' %in% arg.names) && (!'formula' %in% arg.names)) {stop('Either a glm result or a formula is required ...',call.=F)}
+  if(!'formula' %in% arg.names){
+    glm.formula <- gsub('\\s+','',glm.result$formula)
+  }else {
+    glm.formula <- formula
+  }
+  
+  #parsing var.list from glm formula
+  vars.list<-strsplit(glm.formula,'\\+|~|\\*|\\|+')
+  
+  if(is.null(CCsubset)){ 
+    data <- unique(extract(vars.list)$holders)
+    CCsubset <- paste0('CC.',data)
+    warning(paste0("CCsubset is not specified ...the subset will be saved in ", CCsubset, " dataframe on server side"),call.=F,immediate.=T)
+  }
+  
+  if(is.null(datasources)) { datasources = findLoginObjects()}
+  ds <- datasources
+  
+  #define vars.2df and vars.names from var.list 
+  vars.2df<-unlist(vars.list)
+  vars.names<-extract(vars.list)$elements
+  
+  #do the subset and completecases
+  cally<-paste0('dataframeDS(cbind(',paste0(vars.2df,collapse=','),')',',NULL,FALSE,TRUE,','c(',paste0("'",vars.names,"'",collapse=','),')',',TRUE,TRUE)')
+  datashield.assign(ds, CCsubset, as.symbol(cally))
+  
+  #clean server workspace
+  to_rm <- c("complt","cs","dt","rs")
+  run.clean(to_rm,datasources=ds)
+  
+  #info to user
+  cat(paste0("You may check the assigned ",CCsubset," dataframe with the following datashield commands: 
+   datashield.symbols(opals), ds.colnames('",CCsubset,"') AND ds.dim('",CCsubset,"')")) 
+  
+  return(invisible(CCsubset))
+}
+
+
+
 
 #####################-----------STATS --------------------####################################
 
