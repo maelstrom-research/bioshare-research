@@ -11,7 +11,7 @@
 .Rproj.user/
 .Rproj.user
 core
-*subgroup*.R
+*sub*.R
 *tmp.R
 Veg-MetS-Table1-SampleCharateristics.R
 Veg_byHOstr.RData
