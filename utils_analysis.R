@@ -606,7 +606,8 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
   #update var to na.data$var
   if(!is.null(data)) var<- paste0(data,'$',var)
   
-  class.check <- checkClass(ds[1],var) 
+  class.check <- try(checkClass(ds[1],var),silent=T)
+  class.err <- inherits(class.check,what='try-error')
   is.num <- class.check %in% c('integer','numeric')
   is.factor <- class.check == 'factor'
   is.class.null <- class.check == "NULL"
@@ -677,7 +678,9 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
     res <- data.frame(meanSd,row.names=names.w.p,stringsAsFactors=F)
   } else if (is.class.null){
     stop(paste0('No such variable in ',names(ds[1])),call.=F)
-  }  
+  } else {
+    stop(paste0('data is not specified or ', var, ' is not a valid name'),call.=F)
+  } 
   res
 }
 
