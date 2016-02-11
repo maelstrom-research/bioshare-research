@@ -446,13 +446,10 @@ bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALS
 #expo.c <- c('expo1','expo2','expo3')
 #glm.stack <- run.stack.glm.by(expo.c,outcome=outcome,model=model,data='D',fam='binomial',by='expo',datasources=opals[1])
 
-bioshare.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,datasources,...)
+bioshare.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,...)
 {
   if(missing(by)) {stop('[by] is mandatory',call.=F)}
   else{info <- by}
-  
-  if(is.null(datasources)) datasources = findLoginObjects()
-  ds <- datasources
   
   .ml <- function(x) {
     if(grepl('expo',info,T)) {expo <- x}
@@ -460,7 +457,7 @@ bioshare.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,dat
     else if (grepl('model',info,T)) {model <- x}
     #formul <- run.update.formula(outcome,expo,model,data)
     #run.meta.glm(formul,family=fam,ref=ref,datasources = datasources,...) 
-    run.model(outcome,expo,model,family = fam,data,Ncases=T,pval = F, ref =ref,datasources = ds,...)
+    run.model(outcome,expo,model,family = fam,data,Ncases=T,pval = F, ref =ref,...)
   }
   
   if(grepl('expo',info,T)) {
