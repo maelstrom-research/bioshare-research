@@ -686,18 +686,23 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
 
 
 #this function computes 2 x 2 table and chi2 
-bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.percent = F, chisq.test = T,split = F,datasources = NULL) 
+bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.percent = F, chisq.test = T,split = F,datasources = NULL,...) 
 {
   if(missing(x)) stop ('x variable (character) is required ...',call.=F)
   if(missing(y)) stop ('y variable (character) is required ...',call.=F)
   if(is.null(datasources)) datasources = findLoginObjects()
   ds <- datasources
   
+  #get dot dot dot info
+  dots <- list(...)
+  correct <- if (any(grepl('correct',names(dots)))){ dots$correct}else{F}
+  #start server side computation
   if(is.null(data)) callt2 <- paste0('table2dDS(',x,',',y,')')
   else callt2 <- paste0('table2dDS(',data,'$',x,',',data,'$',y,')')
   
   t2.res <-  datashield.aggregate(ds,as.symbol(callt2))
   
+  # client side
   process.result <- function (result)
   {
     with.pooled <- length(result) > 1
@@ -767,25 +772,38 @@ bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
       }else{
         if(with.pooled) {
           Pooled.data <- t2.nomarg$Pooled
-          try(chisq.test(Pooled.data,correct=F),silent=T)
+          try(chisq.test(Pooled.data,correct = correct),silent=T)
         }else{
           Study.data <- t2.nomarg[[1]]
-          try(chisq.test(Study.data,correct=F),silent=T)
+          try(chisq.test(Study.data,correct=correct),silent=T)
         }
       }
-      res <- c(res,list(chi2 = chi2))
+      res <- c(res, list(chi2 = chi2))
+      
     }
     return (res)
   }
   
-  message <- paste0('\n-----------  ',x,'(row) X ',y,'(col)  ------------')
-  cat(message,'\n\n')
   if(split) {
     final <- c()
     for(i in 1:length(t2.res)){final <- c(final,process.result(t2.res[i])) }
-    final
+    
+  }else {
+    final <- process.result(t2.res) 
   }
-  else process.result(t2.res)
+  
+  # now get final results
+  
+  #computation info
+  info <- paste0('\n-----------  ',x,'(row) X ',y,'(col)  ------------\n\n')
+  
+  #names(final) <- info
+  
+  cat(info)
+  print (final)
+  
+  invisible(final)
+  
 }
 
 
