@@ -16,16 +16,20 @@ bioshare.env$run.isAssigned <- function(obj ,where = NULL,datasources = NULL)
   if(is.null(datasources)) datasources = findLoginObjects()
   ds <- datasources
   
+  #define cally expression 
   cally <- if(is.null(where)) {
-    
     call('exists',obj)
   }else{
-    if(all(datashield.symbols(ds) %in% where)) {  
+    #see if where is present in all ds
+    #check.where <- sum(unlist(datashield.symbols(ds)) %in% where)  testing
+    check.where <- Reduce(all,run.isAssigned(where,datasources=ds))
+    if(check.where) {  ############<---------------------
       call('exists',obj,as.name(where)) 
     }else {
       stop(paste0('"',where,'" is not available in some server(s). \nCheck availability in server(s):-> run.isAssigned("',where,'")'),call.=F)
     }
   }
+  
   datashield.aggregate(ds,cally)
 }
 
@@ -714,8 +718,18 @@ bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
   dots <- list(...)
   correct <- if (any(grepl('correct',names(dots)))){ dots$correct}else{F}
   #start server side computation
-  if(is.null(data)) callt2 <- paste0('table2dDS(',x,',',y,')')
-  else callt2 <- paste0('table2dDS(',data,'$',x,',',data,'$',y,')')
+  if(is.null(data)) {
+    check.x <- Reduce(all,run.isAssigned(x))
+    if(check.x) {
+      check.y <- Reduce(all,run.isAssigned(y))
+      if(!check.y) stop (paste0('"',y,'" is not assigned in some server(s). Did you forget [data] argument ?'))  
+    }else {
+      stop (paste0('"',x,'" is not assigned in some server(s). Did you forget [data] argument ?')) 
+    }
+    callt2 <- paste0('table2dDS(',x,',',y,')')
+  }else {
+    callt2 <- paste0('table2dDS(',data,'$',x,',',data,'$',y,')')
+  }
   
   t2.res <-  datashield.aggregate(ds,as.symbol(callt2))
   
