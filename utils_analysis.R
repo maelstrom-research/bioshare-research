@@ -11,7 +11,24 @@ bioshare.env$findLoginObjects <- dsBaseClient:::findLoginObjects
 bioshare.env$checkClass <- dsBaseClient:::checkClass
 
 #check if an object is assigned
-bioshare.env$isAssigned <- dsBaseClient:::isAssigned
+bioshare.env$run.isAssigned <- function(obj ,where = NULL,datasources = NULL)
+{
+  if(is.null(datasources)) datasources = findLoginObjects()
+  ds <- datasources
+  
+  cally <- if(is.null(where)) {
+    
+    call('exists',obj)
+  }else{
+    if(all(datashield.symbols(ds) %in% where)) {  
+      call('exists',obj,as.name(where)) 
+    }else {
+      stop(paste0('"',where,'" is not available in some server(s). \nCheck availability in server(s):-> run.isAssigned("',where,'")'),call.=F)
+    }
+  }
+  datashield.aggregate(ds,cally)
+}
+
 #extract elements and object form server side vector (e.g. D$AGE_YRS)
 bioshare.env$extract <- dsBaseClient:::extract
 #pooled mean
@@ -430,7 +447,7 @@ bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALS
 
 ################################################################
 #run.stack.glm.by function will run many glms and return a stack of all the glm compute based on the <by> params
-#ex: if by = 'expo', .glist will compute a list of glm by 'expo'
+#ex: if by = 'expo', the function will compute a list of glm by 'expo'
 #param <X> = the list of names (charcter) to compute by
 #param <expo> = the expo var (in character) 
 #param <outcome> = the outcome var (in character)
