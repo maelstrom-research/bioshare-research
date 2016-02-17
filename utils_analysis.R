@@ -841,7 +841,7 @@ bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
 ##########################################
 
 #clean workspace server side
-bioshare.env$run.clean <- function(x,all=F,datasources=NULL)
+bioshare.env$run.rm <- function(x,all=F,datasources=NULL)
 {
   if(all) { 
     call <- 'list = ls()'
