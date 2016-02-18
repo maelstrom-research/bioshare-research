@@ -130,7 +130,7 @@ bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NU
   if(is.null(data)) {stop('Please specify the data(dataframe) to subset',call.=F)}
   
   if(is.null(subclass)) {
-    stop('Nothing to do, sublass var is missing required...',call.=F)
+    stop('Nothing to do, sublass var is required...',call.=F)
   }else {
     #Sanity check : subclass should always be a factor
     subset.class <- checkClass(ds,paste0(data,'$',subclass))
@@ -173,7 +173,7 @@ bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NU
   
   to.rm <- c("complt","cs","dt","rs",to.rm)
   #Clean space
-  run.clean(to.rm,datasources=ds)
+  run.rm(to.rm,datasources=ds)
   
   message(paste0('-- dataframe ',subinfobj ,' is assigned',collapse='\n'))
   info <- paste0("ds.colnames('",subinfobj,"')",collapse=' OR ')
@@ -254,11 +254,6 @@ bioshare.env$run.dummy.study <- function (data,datasources)
   if(missing(data)) stop('data is mandatory ...\nplease add data name as character!')
   if(missing(datasources)) datasources <- findLoginObjects()
   ds <- datasources
-  # call length
-  cally <- paste0('NROW(',data,')')
-  ln <- datashield.aggregate(ds,as.symbol(cally))
-  #make zeros vector in each server 
-  for (i in 1:length(ds)) { datashield.assign(ds[i],'zeros.dummy',call('rep',0,ln[[i]])) }
   
   message(paste0(paste0(names(ds),collapse=', '), ' dummy variable(s) will be stored in dataframe ',data))
   
@@ -267,8 +262,9 @@ bioshare.env$run.dummy.study <- function (data,datasources)
     effect_name<-names(ds[i])
     #assign 1 to study and 0 to others
     message(paste0('---processing ',effect_name,' dummy ...'))
-    datashield.assign(ds[i],effect_name,as.name('zeros.dummy+1'))
-    datashield.assign(ds[-i],effect_name,as.name('zeros.dummy'))
+    
+    datashield.assign(ds[i],effect_name,as.name('1'))
+    datashield.assign(ds[-i],effect_name,as.name('0'))
     
     callcbind<-paste0('cbind(',data,',',effect_name,')')
     datashield.assign(ds[i],data,as.symbol(callcbind))
@@ -276,11 +272,10 @@ bioshare.env$run.dummy.study <- function (data,datasources)
     
   }
   #clean server side
-  run.clean(names(ds),datasources=ds)
+  run.rm(names(ds),datasources=ds)
   
   cat(paste0("You may check the stored dummy variables with the following datashield command: ds.colnames('",data,"')"))
 }
-
 
 ####################################   GLM   #######################
 bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, print = T,...)
@@ -551,7 +546,7 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   
   #clean server workspace
   to_rm <- c("cc","complt","cs","dt","lg" , "rs", "th","varname","RD")
-  run.clean(to_rm,datasources=ds)
+  run.rm(to_rm,datasources=ds)
   
   #info to user
   cat(paste0("You may check the assigned ",NAsubset," dataframe with the following datashield commands: 
@@ -603,7 +598,7 @@ bioshare.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,data
   
   #clean server workspace
   to_rm <- c("complt","cs","dt","rs")
-  run.clean(to_rm,datasources=ds)
+  run.rm(to_rm,datasources=ds)
   
   #info to user
   cat(paste0("You may check the assigned ",CCsubset," dataframe with the following datashield commands: 
