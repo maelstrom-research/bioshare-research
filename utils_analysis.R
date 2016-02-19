@@ -119,6 +119,7 @@ bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
 }
 
 
+
 ########INTERNAL FUNCTION
 bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NULL, datasources=NULL){
   
@@ -176,10 +177,13 @@ bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NU
   run.rm(to.rm,datasources=ds)
   
   message(paste0('-- dataframe ',subinfobj ,' is assigned',collapse='\n'))
-  info <- paste0("ds.colnames('",subinfobj,"')",collapse=' OR ')
+  info <- paste0("run.isAssigned('",subinfobj,"')",collapse=' OR ')
   cat(paste0("You may check the assigned subsetted dataframes with the following datashield command: ",info,""))
   return(invisible(subinfobj))
 }
+
+
+
 
 ####################################################################################################
 # this function recode the levels of a factor variable ex: bin a bmi 1,2,3 to bmi 0, 1 
@@ -273,8 +277,8 @@ bioshare.env$run.dummy.study <- function (data,datasources)
   }
   #clean server side
   run.rm(names(ds),datasources=ds)
-  
-  cat(paste0("You may check the stored dummy variables with the following datashield command: ds.colnames('",data,"')"))
+  info <- paste0("run.isAssigned('",names(ds),"','",data,"')",collapse=" OR ")
+  cat(paste0("You may check the stored dummy variables with the following datashield command: ", info ))
 }
 
 ####################################   GLM   #######################
@@ -397,6 +401,8 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pva
   print(result)
   return(invisible(result))
 }
+
+
 
 
 ##############################################
@@ -554,6 +560,9 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   
   return(invisible(NAsubset))
 }
+
+
+
 
 ############################################################################
 #This function takes either a formula for a glm or a result from a run glm,
@@ -833,6 +842,8 @@ bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
 }
 
 
+
+
 ##########################################
 
 #clean workspace server side
@@ -871,7 +882,7 @@ bioshare.env$run.close<-function(all=F)
     }
   }
 
- if(as.logical(all)) rm(list=ls(name=.GlobalEnv),envir=.GlobalEnv)
+ if(as.logical(all)) rm(list=ls(name=.GlobalEnv,all.names=T),envir=.GlobalEnv)
  else rm(bioshare.env,pos=search())  
  detach(bioshare.env,pos=search())
  cat('bioshare environnment is now detached from memory...')  
