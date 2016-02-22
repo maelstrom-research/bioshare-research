@@ -10,6 +10,7 @@ source('utils_analysis.R',echo=F,print.eval=F)
 #load libraries
 library(datashieldclient)
 library(dsBetaTestClient)
+library(dsBaseClient)
 
 #variables need of aprh
 myvar<-list('AGE_YRS','AGE_YRS_CATEGORICAL','GENDER','EDU_HIGHEST_2','INCOME','WORK_STATUS_CURRENT','SMK_STATUS','SMK_TBC_CURRENT','SMK_PACKYRS',
@@ -96,7 +97,6 @@ model <-'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_A
 # model_3b(adjusted for age, sex, bmi, highest level of education, household income, smoking status, and exposure to second-hand tobacco smoke)     <-
 model <-'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+INCOME+SMK_STATUS+SMK_PASSIVE_ALL'
 
-
 ###############
 #other models to test: model2 -->->->->-> model3
 #model 2a (Ajusted for age, sex, BMI, highest level of education, and smoking status)+pack-years smoked  
@@ -144,7 +144,7 @@ datashield.symbols(opals) # check objects on server side
 run.model(outcome,expo,model,family = 'binomial',data,Ncases=T,pval = F, ref ='lifelines',check=F) #ref is specified here
 
 #split model run [ no need to create dummy study variable, but you need to specify the datasource] 
-run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, datasources = opals[2],check=F) #ukbiobank opals[2]
+run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, datasources = opals[1],check=F) #ukbiobank opals[2]
 
 
 
