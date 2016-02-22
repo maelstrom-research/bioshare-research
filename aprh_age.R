@@ -70,7 +70,30 @@ model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_
 model.sgrp <- run.adjust.model(model,'age_yrs')         #ex: will remove all terms spelled like 'AGE'
 
 
-#######################
+
+####----------- MULTIPLE GLMS RUN AT A TIME-----------------
+
+
+# define sets of outcomes and expos: ALWAYS LOAD THESES 2 SET OF VARIABLES 
+expos.c <- c('PM25_ESCAPE','PM10_ESC','NO2_ESCAPE','PMcoarse_ESCAPE')
+
+outcomes.c <- c(
+  'SYM_WHEEZ', 
+  'SYM_WHEEZ_NOCOLD',
+  'SYM_SBREATH',
+  #'SYM_SBREATH_WALK',
+  'SYM_BREATH_PRB',
+  'SYM_PHLEGM_UP',
+  'SYM_PHLEGM_UP_FREQ',
+  'SYM_PHLEGM_DAY',
+  'SYM_PHLEGM_DAY_FREQ'
+  #'SYM_SBREATH_EXT'
+)
+
+
+
+#by 
+#####################
 expo <- 'PM25_ESCAPE'
 expo <- 'PM10_ESC'
 expo <- 'NO2_ESCAPE'
