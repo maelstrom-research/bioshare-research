@@ -1,6 +1,6 @@
 ################################################################
 #
-#           MULTIPLE GLM RUNS FOR SUBGRP ANALYSIS
+#           MULTIPLE GLM RUNS FOR MAIN ANALYSIS
 #
 ###############################################################
 
@@ -26,48 +26,32 @@ load('login-aprh.rda')
 opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 
 
-#here main data is 'D': select it once at start
-main.data <- 'D'
-
-#RUN DUMMY STUDY HERE once so it applies to all subsequent sub data
-run.dummy.study(main.data) #run once 
-
-
-################################################################################################################################################################################
-
-################## -------------GENERATE THE SUBGROUP DATAFRAMES ----------------------------------------
-
-#---------------subgroup of D by AGE on server side
-sub.age65plus <- run.subset(data=main.data,logic='AGE_YRS>=65',subsetName='age65plus')
-sub.age65less <- run.subset(data= main.data,logic = 'AGE_YRS<65',subsetName='age65less')
-
-##############---------- SELECT THE DATA THAT WILL BE USED FOR THE CORRESPONDING SUBGROUP  ANALYSIS ----------------------
-#specify the name (character) of the dataframe that resulted from run.get.subset ex: D.GENDER0 or D.GENDER1
-
-##------ by AGE ---------
-data <- 'age65plus'                                 # AGE>=65
-data <- 'age65less'                                # AGE < 65
-
+########################     DATA THAT WILL BE USED FOR THE MAIN ANALYSIS      ############
+#specify the name (character) of the dataframe that was assigned in datashield.login ('D' by default)
+data <- 'D'
 
 #################################################################################
 ##            running some regressions :multivariate                           ##
 #################################################################################
 
-####################### define models [model3a,model3b]
+####################### define models [model0,model1, model2a,model2b model3a,model3b]
+### model0 (unajusted)
+model <- NULL
 
-# Model 3a: adjusted for age, sex, bmi, highest level of education, smoking status, and exposure to second-hand tobacco smoke        	
+###model_1(ajusted for age,sex )                                                         <-
+model<-'AGE_YRS+GENDER'
+
+#Model 2a (adjusted for age, sex, bmi, highest level of education)                        <-
+model<-'AGE_YRS+GENDER+EDU_HIGHEST_2+PM_BMI_CATEGORIAL'
+
+#Model 2b (adjusted for age, sex, bmi, highest level of education and household income)
+model <- 'AGE_YRS+GENDER+EDU_HIGHEST_2+PM_BMI_CATEGORIAL+INCOME'
+
+# Model 3a: adjusted for age, sex, bmi, highest level of education, smoking status, and exposure to second-hand tobacco smoke    			
 model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_ALL'
 
 #Model 3b: adjusted for age, sex, bmi, highest level of education, household income, smoking status, and exposure to second-hand tobacco smoke 
 model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_ALL+INCOME'
-
-
-########--------- RE-ADJUST THE MODEL HERE FOR EACH SUBGROUP TERMS -----------------------
-### -----remove all subgroup terms in the model: we can use a keyword stem of the subgroup terms to remove 
-### -----run it for each specific model
-
-#------ by AGE ---------
-model.sgrp <- run.adjust.model(model,'age_yrs')         #ex: will remove all terms spelled like 'AGE'
 
 
 
@@ -116,13 +100,13 @@ outcome <- 'SYM_SBREATH_EXT'
 ##### many glms either by expo or by outcomes (by model not yet ready) and stack them 
 #####single
 #lifelines: run by outcome
-glm.stack <- run.stack.glm.by(expo=expo,outcome=outcomes.c,model.sgrp,data,fam='binomial',by='outcome',datasources=opals[1])
+glm.stack <- run.stack.glm.by(expo=expo,outcome=outcomes.c,model,data,fam='binomial',by='outcome',datasources=opals[1])
 #ukb: run by expo
-glm.stack <- run.stack.glm.by(expo=expos.c,outcome=outcome,model.sgrp,data,fam='binomial',by='expo',datasources=opals[2]) #ukb
+glm.stack <- run.stack.glm.by(expo=expos.c,outcome=outcome,model,data,fam='binomial',by='expo',datasources=opals[2]) #ukb
 
 
 #pooled: run by expo
-glm.stack <- run.stack.glm.by(expo=expos.c,outcome=outcome,model.sgrp,data,fam='binomial',ref = 'lifelines',by='expo',datasources=opals)
+glm.stack <- run.stack.glm.by(expo=expos.c,outcome=outcome,model,data,fam='binomial',ref = 'lifelines',by='expo',datasources=opals)
 
 print(glm.stack)
 
