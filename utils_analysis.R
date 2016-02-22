@@ -45,6 +45,46 @@ bioshare.env$.vectorize <- function(x,subscript,simplify = T)
   else lapply(x,'[[',subscript)
 }
 
+
+#@internal: process logical string within run.subset
+.logical2ds <- function(logicexpr=NULL){
+  
+  if(is.null(logicexpr)) {return (NULL)}
+  
+  error <- F
+  
+  lg.char <- unlist(strsplit(logicexpr,'>|<|\\={2}|>\\=|<\\=|!\\='))
+  lg.op <- sub('\\w+(>|<|\\={1,2}|>\\=|<\\=|!\\=)\\d+','\\1',logicexpr)
+  lg.var <- lg.char[1]
+  lg.th <- lg.char[2]
+  
+  if((length(lg.char) !=2) || is.logical(lg.th) || is.na(as.numeric(lg.th)) ) error <- T  
+  all.lg <- c('>' = 1, 
+              '>=' = 2,
+              '<' = 3,
+              '<=' = 4,
+              '==' = 5,
+              '!='= 6
+  )
+  
+  indic <- c('>' = 'gt', 
+             '>=' = 'ge',
+             '<' = 'lt',
+             '<=' = 'le',
+             '==' = 'eq',
+             '!='= 'diff'
+  )
+  
+  if(! lg.op %in% names(all.lg)) error <- T
+  
+  if(error)  stop(paste0(' "',logicexpr,  '" is not a valid logical expression...'),call.=F)
+  
+  return (  list(lg = all.lg[[lg.op]],varsub= lg.var,th =lg.th,indic =indic[[lg.op]]) )  
+  
+}
+
+
+
 #function get vars from opal
 bioshare.env$var.assign<-function(opal,datasource,table,variables=NULL)
 {
@@ -119,6 +159,132 @@ bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
 }
 
 
+##############################################
+#   SUBSET  by logical or/and complete cases or/and cols or/and rows
+#########################
+bioshare.env$run.subset<-function(data = NULL,logic = NULL, cols=NULL,rows =NULL,completeCases=FALSE, subsetName = NULL,  datasources=NULL){
+  
+  
+  if(is.null(datasources)) datasources <- findLoginObjects()
+  ds <- datasources
+  
+  #verify data
+  if(is.null(data)) {stop('Please specify the data(dataframe) to subset',call.=F)}
+  
+  has.col.row <- !(is.null(cols) && is.null(rows))
+  has.default <- has.col.row || !is.null(logic)
+  
+  if((!has.default) && (!completeCases)) stop("Nothing to do! Specify param <logic (character, EX: 'AGE >10')> OR/AND <completeCases (TRUE)> ...",call.=F)
+  
+  #   COMPUTATION
+
+  #validate and retrieve correct logic: the process will stop if logic is wrongly specified
+  logicds <- .logical2ds(logic)
+  #get ready for execution
+  lg <- logicds$lg
+  th <- logicds$th
+  varsub <- logicds$varsub
+  indic <- logicds$indic
+  
+  
+  X <- data
+  name.X <- data
+  X.info <- data
+  
+  is.a.vector <- FALSE
+  if(length(cols) == 1) {
+    one.col <- T #indicator that one column (a variable) should be returned
+    X.info <- paste0(data,'$',cols)
+    name.X <- paste0(data,'.',cols)
+    check.X <- Reduce(all,run.isAssigned(cols,data,ds))
+    
+    # vector not dataframe
+    if(cols == varsub){
+      X <- paste0(X,'$',cols) 
+      is.a.vector <- TRUE
+    }
+    
+  }else{
+    one.col <- F
+    check.X <- Reduce(all,run.isAssigned(X,datasources=ds))
+  }
+  
+  #sanity check
+  if(!check.X) stop (paste0('"',X.info, '" is not found in some server(s)...Process is halted!'),call.=F)
+  
+  
+  #define subsetName
+  if(is.null(subsetName)) { 
+    subsetName <- if (!is.null(logicds)) {
+      paste0(name.X,'.',varsub,'.',indic,'.',th)  
+    }else if(completeCases){
+      paste0(name.X,'.cmplt')
+    }
+    message(paste0('subsetName is not specified. Resulting subset will be assigned to ',subsetName))
+  }
+  
+  #get basic infos
+  info <- if(!is.null(logicds)){ 
+    paste0('---Subsetting ',X.info,' by ',logic)
+  }else if (!is.null(cols) && (!is.null(rows))){
+    paste0('---Subsetting ',X.info,' by ',paste0(cols,collapse=','),'AND by rows')
+  }else if(!is.null(rows)){
+    paste0('--Subsetting ',X.info,' by rows')
+  }else if (!is.null(cols)){
+    paste0('---Subsetting ',X.info,' by ',paste0(cols,collapse=','))
+  }else if (completeCases) {
+    paste0('--Subsetting ',X.info,' by complete cases')
+  }
+  
+  
+  #####excute server side
+  
+  message(info) 
+  
+  #1- default
+  
+  if(has.col.row) {
+    
+    cols.uniq <- if (one.col) {unique(c(varsub,cols))} else{cols } #the key is here
+    
+    cally.r.c  <-  call('subsetDS', dt=X, complt=FALSE, rs=rows,cols.uniq)
+    datashield.assign(ds, subsetName, cally.r.c)
+    
+    #update X for the next steps
+    X <- subsetName
+  }
+  
+  
+  #do logic if any
+  if ( !is.null(logicds)){ 
+    
+    cally.logic <- call('subsetDS', dt=X, complt=FALSE, rs=NULL, cs=NULL, lg=lg, th=th, varname=varsub)
+    datashield.assign(ds, subsetName, cally.logic)
+  }
+  
+  #special case to process before any complete cases
+  if (one.col && !is.a.vector) {
+    cally.vect <- paste0(subsetName,'$',cols)
+    datashield.assign(ds,subsetName,as.name(cally.vect)) 
+  }
+  
+  #completecases if any 
+  if(completeCases ){
+    cally.cc <- call('subsetDS', dt=X, complt=completeCases)
+    datashield.assign(ds, subsetName, cally.cc)
+  }
+  
+  #clean server workspace
+  run.rm(c( "complt","cs","dt","lg","rs","th","varname"),datasources=ds)
+  
+  #message to the user
+  cat(paste0('You may check the assigned subset with this command: run.isAssigned("',subsetName,'")\n'))
+  
+  return (invisible(subsetName))
+  
+}
+
+
 
 ########INTERNAL FUNCTION
 bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NULL, datasources=NULL){
@@ -181,6 +347,10 @@ bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NU
   cat(paste0("You may check the assigned subsetted dataframes with the following datashield command: ",info,""))
   return(invisible(subinfobj))
 }
+
+
+
+
 
 
 
@@ -704,7 +874,7 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
   } else if (is.class.null){
     stop(paste0('No such variable in ',names(ds[1])),call.=F)
   } else {
-    stop(paste0('data is not specified or ', var, ' is not a valid name'),call.=F)
+    stop(paste0('"data" is not specified or "', var, '" is not a valid name'),call.=F)
   } 
   res
 }
@@ -726,7 +896,7 @@ bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
     check.x <- Reduce(all,run.isAssigned(x))
     if(check.x) {
       check.y <- Reduce(all,run.isAssigned(y))
-      if(!check.y) stop (paste0('"',y,'" is not assigned in some server(s). Did you forget [data] argument ?'))  
+      if(!check.y) stop (paste0('"',y,'" is not found in some server(s). Did you forget [data] argument ?'))  
     }else {
       stop (paste0('"',x,'" is not assigned in some server(s). Did you forget [data] argument ?')) 
     }
