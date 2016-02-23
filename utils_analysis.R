@@ -1,4 +1,4 @@
-if(exists('bioshare.env'))detach(bioshare.env)
+if('bioshare.env' %in% search())detach(bioshare.env)
 
 #########################################################
 #initiate env
