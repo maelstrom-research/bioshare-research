@@ -39,20 +39,24 @@ outcome <- 'SYM_SBREATH_WALK'
 outcome <- 'SYM_SBREATH_EXT'
 
 
-gstack <- .glist.by(expo,outcome=outcomes.c,model=model,data='D',fam='binomial',by='outcome',datasources=opals[1])
-
+gstack.pm25 <- .glist.by('PM25_ESCAPE',outcome=outcomes.c,model=model,data='D',fam='binomial',by='outcome',datasources=opals[1])
+gstack.pmco <- .glist.by('PMcoarse_ESCAPE',outcome=outcomes.c,model=model,data='D',fam='binomial',by='outcome',datasources=opals[1])
 
 #--- getting forestplot meta-data  ready---
-meta.stack <- .stack.fp(gstack,label=expo)
-labeltxt <- .label.fp(gstack,label=expo)
+meta.stack <- .stack.fp(gstack.pm25,label='PM2.5')
+meta.stack <- .stack.fp(gstack.pmco,label='PMcoarse')
+
+labeltxt <- .label.fp(gstack.pm25,label='PM2.5')
+lbaeltxt <- .label.fp(gstack.pmco,label='PMcoarse')
+
+
+
 is.summary <- c(T,rep(F,nrow(meta.stack)-1))
 
-
-
 #######mutiple
-meta2 <- rbind(meta.stack,meta.stack)
-label2<- rbind(labeltxt,labeltxt)
-is.summary2 <- c(is.summary,is.summary)
+meta3 <- rbind(meta.stack,meta.stack,meta.stack)
+label3<- rbind(labeltxt,labeltxt,labeltxt)
+is.summary3 <- c(is.summary,is.summary,is.summary)
 
 
 
@@ -70,7 +74,7 @@ forestplot(labeltxt,meta.stack,new_page = TRUE,is.summary=is.summary,zero =1,box
            xticks =seq(from=.9,to=1.15,by=.05))
 
 #--- multi
-forestplot(label2,meta2,new_page = TRUE,is.summary=is.summary2,zero =1,boxsize=.1,graph.pos=2,
+forestplot(label3,meta3,new_page = TRUE,is.summary=is.summary3,zero =1,boxsize=.1,graph.pos=2,
            lwd.xaxis=2,
            txt_gp = fpTxtGp(label = gpar(cex=.60),xlab = gpar(cex = .8),ticks = gpar(cex = .5),summary = gpar(cex = .8) ),
            line.margin = .01,
@@ -79,6 +83,6 @@ forestplot(label2,meta2,new_page = TRUE,is.summary=is.summary2,zero =1,boxsize=.
            col=fpColors(box="royalblue",line="darkblue", summary="royalblue"),
            xlab = 'Odds Ratio',title = 'Study Name(TODO)',
            vertice=T,
-           clip = c(.95,1.21),
-           xticks =seq(from=.9,to=1.15,by=.05))
+           clip = c(.77,1.31),
+           xticks =seq(from=.8,to=1.3,by=.05))
 
