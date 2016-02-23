@@ -1,10 +1,13 @@
+if(exists('bioshare.env'))detach(bioshare.env)
+
+#########################################################
+#initiate env
 bioshare.env <- new.env()
 
-############################################################################
+#################################################
 # utils functions
-###########################################################################
-# check if an object is defined
-bioshare.env$isDefined <- dsBaseClient:::isDefined
+#################################################
+
 #get opals login object(s) in the env
 bioshare.env$findLoginObjects <- dsBaseClient:::findLoginObjects
 #check the class of an object
@@ -54,7 +57,7 @@ bioshare.env$.vectorize <- function(x,subscript,simplify = T)
   error <- F
   
   lg.char <- unlist(strsplit(logicexpr,'>|<|\\={2}|>\\=|<\\=|!\\='))
-  lg.op <- sub('\\w+(>|<|\\={1,2}|>\\=|<\\=|!\\=)\\d+','\\1',logicexpr)
+  lg.op <- sub('\\w+(>|<|\\={2}|>\\=|<\\=|!\\=)\\d+','\\1',logicexpr)
   lg.var <- lg.char[1]
   lg.th <- lg.char[2]
   
@@ -514,7 +517,7 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
 ####################################################################################
 #this function create a formula according to the model, outcome and exposition vars
 
-bioshare.env$run.update.formula<-function(outcome,expo,model,data)
+bioshare.env$run.make.formula<-function(outcome,expo,model,data)
 {
   mf <- match.call(expand.dots = FALSE)
   arg.call <- names(mf)[-1]
@@ -551,7 +554,7 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pva
   if(missing(data)) stop('data is mandatory',call.=F)
   
   #update formula
-  formula <- run.update.formula(outcome,expo,model,data)
+  formula <- run.make.formula(outcome,expo,model,data)
   
   #run glm 
   glm.res <- try(run.meta.glm(formula,family,print=T,...),silent=T)
@@ -647,7 +650,7 @@ bioshare.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,...
     if(grepl('expo',info,T)) {expo <- x}
     else if(grepl('outcome',info,T)) {outcome <- x}
     else if (grepl('model',info,T)) {model <- x}
-    #formul <- run.update.formula(outcome,expo,model,data)
+    #formul <- run.make.formula(outcome,expo,model,data)
     #run.meta.glm(formul,family=fam,ref=ref,datasources = datasources,...) 
     run.model(outcome,expo,model,family = fam,data,Ncases=T,pval = F, ref =ref,...)
   }
