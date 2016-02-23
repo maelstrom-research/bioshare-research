@@ -1056,9 +1056,12 @@ bioshare.env$run.close<-function(all=F)
   }
 
  if(as.logical(all)) rm(list=ls(name=.GlobalEnv,all.names=T),envir=.GlobalEnv)
- else rm(bioshare.env,pos=search())  
- detach(bioshare.env,pos=search())
- cat('bioshare environnment is now detached from memory...')  
+ if('bioshare.env' %in% search()){
+   detach(bioshare.env,pos=search())
+   cat('bioshare environnment is now detached from memory...') 
+ }
+  
+  
 }
 
 
