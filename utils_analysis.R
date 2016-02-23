@@ -1064,7 +1064,7 @@ bioshare.env$run.close<-function(all=F)
 
 # attach bioshare env
 attach(bioshare.env)
-
+rm(bioshare.env)
 
 
 
