@@ -1,3 +1,8 @@
+# Source the bioshare environnment
+source('utils_analysis.R',echo=F,print.eval=F)
+#forestplot library
+library('forestplot',quietly=T)
+
 #.glist function will run many glms and return a list of all the glm compute based on the by params
 #ex: if by = 'expo', .glist will compute a list of glm by 'expo'
 #param <X> = the list of names (charcter) to compute by
@@ -15,7 +20,7 @@
 #expo.c <- c('expo1','expo2','expo3')
 #gstack <- .glist.by(expo.c,outcome=outcome,model=model,data='D',fam='binomial',by='expo',datasources=opals[1])
 
-.glist.by <- function(X,expo,outcome,model,data,fam,ref,by,datasources,...)
+.glist.by <- function(expo,outcome,model,data,fam,ref,by,datasources,...)
 {
   if(missing(by)) {stop('[by] is mandatory',call.=F)}
   else{info <- by}
@@ -25,10 +30,21 @@
     else if(grepl('outcome',info,T)) {outcome <- x}
     else if (grepl('model',info,T)) {model <- x}
     else {stop('[by] should be either "expo","outcome" or "model"',call.=F)}
-    formul <- run.update.formula(outcome,expo,model,data)
-    run.meta.glm(formul,family=fam,ref=ref,datasources = datasources,...)  
+    formul <- run.make.formula(outcome,expo,model,data)
+    run.meta.glm(formul,family=fam,ref=ref,datasources = datasources,...) 
   }
-  lapply(X,.gl)
+  
+  if(grepl('expo',info,T)) {
+    result <- sapply(expo,.gl,simplify = FALSE, USE.NAMES = TRUE)
+  }else if(grepl('outcome',info,T)) {
+    result <- sapply(outcome,.gl,simplify = FALSE, USE.NAMES = TRUE)
+  }
+  else if (grepl('model',info,T)) {
+    result <- sapply(model,.gl,simplify = FALSE, USE.NAMES = TRUE)
+  }else {
+    stop('[by] should be either "expo","outcome" or "model"',call.=F)
+  }
+  return (result)
 }
 
 #.fp.info function take one ds glm result and return a dataframe with mean lower upper of the 
@@ -41,7 +57,7 @@
 {
   if(missing(glm.result)) stop('Please provide a valid glm result...',call.=F)
   glm.family <- glm.result$family$family
-  glm.coef <- coef(glm.result)
+  glm.coef <- glm.result$coef
   if(grepl("poisson|binomial", glm.family)){
     num.cols <- dim(glm.coef)[2]
     m.ci <- as.data.frame(glm.coef[,(num.cols-2):num.cols],stringsAsFactors=F)
@@ -58,25 +74,43 @@
 #.stack.fp.info use a list of glm returned by .glist.by, process and stack them using .fp.info
 # It will return a dataframe ready for forestplot
 
-.stack.fp.info <- function(glm.res.list,names = NULL){                      # <- TODO TODO TODO  ADD NAMES INFOS IN FUNCTION: FIND BEST WAY TO DO THAT 
-  if(missing(glm.res.list)) stop('Please provide a valid glm result(s) list...',call.=F)
-  glist <- glm.res.list
-  k.list <- lapply(glist,.fp.info)
-  rbind(c(NA,NA),Reduce(rbind,k.list))
+.stack.fp <- function(glm.list,label,...){                      # <- TODO TODO TODO  ADD NAMES INFOS IN FUNCTION: FIND BEST WAY TO DO THAT 
+  if(missing(glm.list)) stop('Please provide a valid glm result(s) list...',call.=F)
+  glist <- glm.list
+  
+  if(missing(label)) stop('Provide a label name ...',call.=F)
+  label <- paste0('**',label,'**')
+  k.list <- lapply(glist,.fp.info,...)
+  
+  k.stack <- rbind(c(NA,NA),Reduce(rbind,k.list))
+  row.names(k.stack) <-c(label, names(glist))
+  
+  k.stack
 }
 
-.labelfptext <- function(glm.res.list,digit=NULL){
-  if(missing(glm.res.list)) stop('Please provide a valid glm result(s) list...',call.=F)
+.label.fp <- function(glm.list,digit=NULL,label,term = NULL){
+  if(missing(glm.list)) stop('Please provide a valid glm result(s) list...',call.=F)
+  glist <- glm.list
+  
+  space <-'           '
+  
+  if(missing(label)) stop('Provide a label name ...',call.=F)
+  label <- paste0(label,space)
+  
   if(is.null(digit)){digit <- 3}
-  glist <- glm.res.list
-  cnames <- names(run.extract.glm.stats(glist[[1]])$stats)
+  
+  
+  #cnames <- names(run.extract.glm.stats(glist[[1]])$stats)
   f<-function(x){
     res.all <- run.extract.glm.stats(x,rdigit=digit)$stats
-    expo <- row.names(res.all)[nrow(res.all)]
-    cbind(expo,res.all[nrow(res.all),])
+    #expo <- row.names(res.all)[nrow(res.all)]
+    #cbind(expo,res.all[nrow(res.all),])
+    term <- if(is.null(term)){nrow(res.all)}else{term}
+    res.all[term,]
   }
   s.list <- lapply(glist,f)
-  rbind(c('Exposure',cnames),Reduce(rbind,s.list))
+  s.stack <- cbind(paste0(space,names(glist)), Reduce(rbind,s.list))
+  rbind(c(label,''),s.stack)
 }
 
 

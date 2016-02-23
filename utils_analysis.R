@@ -584,7 +584,7 @@ bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALS
 {
   if(missing(glm.result)) stop('Please provide a valid glm result...',call.=F)
   glm.family <- glm.result$family$family
-  glm.coef <- coef(glm.result)
+  glm.coef <- (glm.result$coef)
   if(grepl("poisson|binomial", glm.family)){
     stats <- data.frame(OR_CI = apply(glm.coef,1,function(x) {
         OR <- round(x['P_OR'],rdigit)
