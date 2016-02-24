@@ -130,7 +130,7 @@ library('forestplot',quietly=T)
 .outcomes.lit <- c(
   'Wheeze' = 'SYM_WHEEZ', 
   'Wheeze without a cold' = 'SYM_WHEEZ_NOCOLD',
-  'Shortness of breath' = 'SYM_SBREATH',
+  'Shortness of breath at rest' = 'SYM_SBREATH',
   'Shortness of breath walking' = 'SYM_SBREATH_WALK',
   'General breathing problems' = 'SYM_BREATH_PRB',
   'Phlegm when waking up' ='SYM_PHLEGM_UP',
