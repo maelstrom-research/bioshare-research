@@ -12,15 +12,15 @@ source('aprh_data.R',echo=F,print.eval=F)
 #--- stacking coefficient regression for forestplot ----
 expos.c <- c('PM25_ESCAPE','PM10_ESC','NO2_ESCAPE','PMcoarse_ESCAPE')
 outcomes.c <- c(
+  'SYM_BREATH_PRB',
   'SYM_WHEEZ', 
   'SYM_WHEEZ_NOCOLD',
   'SYM_SBREATH',
   #'SYM_SBREATH_WALK',
-  'SYM_BREATH_PRB',
   'SYM_PHLEGM_UP',
-  'SYM_PHLEGM_UP_FREQ',
+  #'SYM_PHLEGM_UP_FREQ',
   'SYM_PHLEGM_DAY',
-  'SYM_PHLEGM_DAY_FREQ'
+  #'SYM_PHLEGM_DAY_FREQ'
   #'SYM_SBREATH_EXT'
 )
 
