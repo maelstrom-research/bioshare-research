@@ -4,26 +4,11 @@
 #
 ###############################################################
 
-# Source the bioshare environnment
+# Attach the DS UTILS environnment
 source('utils_analysis.R',echo=F,print.eval=F)
 
-#load libraries
-library(datashieldclient)
-library(dsBetaTestClient)
-
-#variables need of aprh
-myvar<-list('AGE_YRS','AGE_YRS_CATEGORICAL','GENDER','EDU_HIGHEST_2','WORK_STATUS_CURRENT','SMK_STATUS','SMK_TBC_CURRENT','INCOME',
-            'SMK_PASSIVE_ALL','SMK_PASSIVE_TIME','PM_BMI_CONTINUOUS','PM_BMI_CATEGORIAL','MEDI_ASTHMA_COPD','NO2_ESCAPE',
-            'PM25_ESCAPE','PM10_ESC','PMcoarse_ESCAPE','SYM_WHEEZ','SYM_WHEEZ_NOCOLD','SYM_SBREATH','SYM_SBREATH_WALK','SYM_BREATH_PRB',
-            'SYM_PHLEGM_UP','SYM_PHLEGM_UP_FREQ','SYM_PHLEGM_DAY','SYM_PHLEGM_DAY_FREQ','SYM_COUGH_UP','SYM_COUGH_UP_FREQ','SYM_COUGH_DAY','SYM_COUGH_DAY_FREQ'
-            )
-
-#load loggin information
-load('login-aprh.rda')
-#study<-c('lifelines','ukb')
-
-#login to datashield and assign data to 'D' as default
-opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
+# LOAD DATAs IN EACH OPAL SERVER
+source('aprh_data.R',echo=F,print.eval=F)
 
 
 ########################     DATA THAT WILL BE USED FOR THE MAIN ANALYSIS      ############
@@ -85,11 +70,10 @@ run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, dataso
 
 
 
-#generate formula based on previously called expo, outcome, model and data.
-formula <- run.update.formula(outcome,expo,model,data) #[ data = 'D' main analysis]
-
-glm.res<-run.meta.glm(formula,family='binomial',ref='lifelines')
-run.extract.glm.stats(glm.res)
+### ------generate formula based on previously called expo, outcome, model and data.
+#formula <- run.update.formula(outcome,expo,model,data) #[ data = 'D' main analysis]
+#glm.res<-run.meta.glm(formula,family='binomial',ref='lifelines')
+#run.extract.glm.stats(glm.res)
 
 
 ################# NA STATS ##########################

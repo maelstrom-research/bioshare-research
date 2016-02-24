@@ -1,17 +1,20 @@
-bioshare.env <- new.env()
+if('ds_utils.env' %in% search())detach(ds_utils.env)
 
-############################################################################
+#########################################################
+#initiate env
+ds_utils.env <- new.env()
+
+#################################################
 # utils functions
-###########################################################################
-# check if an object is defined
-bioshare.env$isDefined <- dsBaseClient:::isDefined
+#################################################
+
 #get opals login object(s) in the env
-bioshare.env$findLoginObjects <- dsBaseClient:::findLoginObjects
+ds_utils.env$findLoginObjects <- dsBaseClient:::findLoginObjects
 #check the class of an object
-bioshare.env$checkClass <- dsBaseClient:::checkClass
+ds_utils.env$checkClass <- dsBaseClient:::checkClass
 
 #check if an object is assigned
-bioshare.env$run.isAssigned <- function(obj ,where = NULL,datasources = NULL)
+ds_utils.env$run.isAssigned <- function(obj ,where = NULL,datasources = NULL)
 {
   if(is.null(datasources)) datasources = findLoginObjects()
   ds <- datasources
@@ -34,12 +37,12 @@ bioshare.env$run.isAssigned <- function(obj ,where = NULL,datasources = NULL)
 }
 
 #extract elements and object form server side vector (e.g. D$AGE_YRS)
-bioshare.env$extract <- dsBaseClient:::extract
+ds_utils.env$extract <- dsBaseClient:::extract
 #pooled mean
-bioshare.env$run.pooled.mean<- dsBaseClient:::getPooledMean
+ds_utils.env$run.pooled.mean<- dsBaseClient:::getPooledMean
 
 #vectorize list like structure
-bioshare.env$.vectorize <- function(x,subscript,simplify = T) 
+ds_utils.env$.vectorize <- function(x,subscript,simplify = T) 
 { 
   if(simplify) sapply(x,'[[',subscript)
   else lapply(x,'[[',subscript)
@@ -54,7 +57,7 @@ bioshare.env$.vectorize <- function(x,subscript,simplify = T)
   error <- F
   
   lg.char <- unlist(strsplit(logicexpr,'>|<|\\={2}|>\\=|<\\=|!\\='))
-  lg.op <- sub('\\w+(>|<|\\={1,2}|>\\=|<\\=|!\\=)\\d+','\\1',logicexpr)
+  lg.op <- sub('\\w+(>|<|\\={2}|>\\=|<\\=|!\\=)\\d+','\\1',logicexpr)
   lg.var <- lg.char[1]
   lg.th <- lg.char[2]
   
@@ -86,7 +89,7 @@ bioshare.env$.vectorize <- function(x,subscript,simplify = T)
 
 
 #function get vars from opal
-bioshare.env$var.assign<-function(opal,datasource,table,variables=NULL)
+ds_utils.env$var.assign<-function(opal,datasource,table,variables=NULL)
 {
   datafile<-paste0(datasource, ".", table)
   if(length(variables)==1){
@@ -109,7 +112,7 @@ bioshare.env$var.assign<-function(opal,datasource,table,variables=NULL)
 ########################################################################################
 
 ################ categorical (table2d) for multiple variables ######################
-bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
+ds_utils.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
 {
   if(missing(subset)) stop('subset variable is required ...',call.=F)
   if(missing(vars.list)) stop('var(s) is(are) required ...',call.=F)
@@ -162,7 +165,7 @@ bioshare.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
 ##############################################
 #   SUBSET  by logical or/and complete cases or/and cols or/and rows
 #########################
-bioshare.env$run.subset<-function(data = NULL,logic = NULL, cols=NULL,rows =NULL,completeCases=FALSE, subsetName = NULL,  datasources=NULL){
+ds_utils.env$run.subset<-function(data = NULL,logic = NULL, cols=NULL,rows =NULL,completeCases=FALSE, subsetName = NULL,  datasources=NULL){
   
   
   if(is.null(datasources)) datasources <- findLoginObjects()
@@ -287,7 +290,7 @@ bioshare.env$run.subset<-function(data = NULL,logic = NULL, cols=NULL,rows =NULL
 
 
 ########INTERNAL FUNCTION
-bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NULL, datasources=NULL){
+ds_utils.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NULL, datasources=NULL){
   
   
   if(is.null(datasources)) datasources <- findLoginObjects()
@@ -357,7 +360,7 @@ bioshare.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NU
 
 ####################################################################################################
 # this function recode the levels of a factor variable ex: bin a bmi 1,2,3 to bmi 0, 1 
-bioshare.env$run.changelevel <- function(var,new.levels,new.varname=NULL,data=NULL,datasources) {
+ds_utils.env$run.changelevel <- function(var,new.levels,new.varname=NULL,data=NULL,datasources) {
   
   if(missing(var)) stop('var is required')
   if(missing(new.levels)) stop('new.levels is required')
@@ -414,7 +417,7 @@ bioshare.env$run.changelevel <- function(var,new.levels,new.varname=NULL,data=NU
 #######################################################################
 # this function remove the term in original model
 
-bioshare.env$run.adjust.model <- function(model,term){
+ds_utils.env$run.adjust.model <- function(model,term){
   x <- unlist(strsplit(model,'\\+'))
   x.ind <- which(sapply(x,function(k) grepl(term,k,ignore.case=T)))
   if(length(x.ind)) paste0(x[-x.ind],collapse='+') 
@@ -423,7 +426,7 @@ bioshare.env$run.adjust.model <- function(model,term){
 
 #################### create dummy study effect vars #####
 
-bioshare.env$run.dummy.study <- function (data,datasources)
+ds_utils.env$run.dummy.study <- function (data,datasources)
 {
   if(missing(data)) stop('data is mandatory ...\nplease add data name as character!')
   if(missing(datasources)) datasources <- findLoginObjects()
@@ -452,7 +455,7 @@ bioshare.env$run.dummy.study <- function (data,datasources)
 }
 
 ####################################   GLM   #######################
-bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, print = T,...)
+ds_utils.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, print = T,...)
 {
   if(missing(formula)){
     stop('formula is required ...',call.=F)
@@ -514,7 +517,7 @@ bioshare.env$run.meta.glm<-function(formula, family, ref, datasources,save = F, 
 ####################################################################################
 #this function create a formula according to the model, outcome and exposition vars
 
-bioshare.env$run.update.formula<-function(outcome,expo,model,data)
+ds_utils.env$run.make.formula<-function(outcome,expo,model,data)
 {
   mf <- match.call(expand.dots = FALSE)
   arg.call <- names(mf)[-1]
@@ -542,7 +545,7 @@ bioshare.env$run.update.formula<-function(outcome,expo,model,data)
 #param ...= any params that go to glm (except formula) (i.e: offset, data, weights,wiewIter, datasource)
 #param Ncases = a boolean (TRUE or FALSE(default)) wether to compute N cases or not in the final result  
 
-bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pval=FALSE, ...)
+ds_utils.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pval=FALSE, ...)
 {
   if(missing(outcome)) stop('outcome is required...',call.=F)
   if(missing(expo)) stop('exposition variable is required...',call.=F)
@@ -551,7 +554,7 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pva
   if(missing(data)) stop('data is mandatory',call.=F)
   
   #update formula
-  formula <- run.update.formula(outcome,expo,model,data)
+  formula <- run.make.formula(outcome,expo,model,data)
   
   #run glm 
   glm.res <- try(run.meta.glm(formula,family,print=T,...),silent=T)
@@ -563,7 +566,14 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pva
   else if (glm.err) return(message(glm.res))
   else return(glm.res)
   
-  glm.stats$results <- glm.stats$stats[expo,,F]   #<--display variable names and statistics
+  # rewrite if any interaction term
+  expo <- gsub('*',':',expo,fixed=T)
+  glm.stats.estim <- glm.stats$stats
+  coef.names <- row.names(glm.stats.estim)
+  expo <- coef.names[grepl(expo,coef.names,fixed=T)]
+  
+  
+  glm.stats$results <- glm.stats.estim[expo,,F]   #<--display variable names and statistics
   result <- data.frame(glm.stats$results,row.names=gsub('\\s+','',paste(outcome,'~...',expo)))
   
   #print glm stats
@@ -577,11 +587,11 @@ bioshare.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pva
 
 ##############################################
 #function to extract glm result :P_OR(p.value) 
-bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALSE,rdigit =3)
+ds_utils.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALSE,rdigit =3)
 {
   if(missing(glm.result)) stop('Please provide a valid glm result...',call.=F)
   glm.family <- glm.result$family$family
-  glm.coef <- coef(glm.result)
+  glm.coef <- (glm.result$coef)
   if(grepl("poisson|binomial", glm.family)){
     stats <- data.frame(OR_CI = apply(glm.coef,1,function(x) {
         OR <- round(x['P_OR'],rdigit)
@@ -638,7 +648,7 @@ bioshare.env$run.extract.glm.stats <- function(glm.result,pval=FALSE,Ncases=FALS
 #expo.c <- c('expo1','expo2','expo3')
 #glm.stack <- run.stack.glm.by(expo.c,outcome=outcome,model=model,data='D',fam='binomial',by='expo',datasources=opals[1])
 
-bioshare.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,...)
+ds_utils.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,...)
 {
   if(missing(by)) {stop('[by] is mandatory',call.=F)}
   else{info <- by}
@@ -647,7 +657,7 @@ bioshare.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,...
     if(grepl('expo',info,T)) {expo <- x}
     else if(grepl('outcome',info,T)) {outcome <- x}
     else if (grepl('model',info,T)) {model <- x}
-    #formul <- run.update.formula(outcome,expo,model,data)
+    #formul <- run.make.formula(outcome,expo,model,data)
     #run.meta.glm(formul,family=fam,ref=ref,datasources = datasources,...) 
     run.model(outcome,expo,model,family = fam,data,Ncases=T,pval = F, ref =ref,...)
   }
@@ -676,7 +686,7 @@ bioshare.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,...
 #param <NAsubset> (optional): the name of the newly created dataframe.
 #param <datasources> (optional): the datasources (study opal infos) where to do carry the computation. If not specified it will use all server(s)
 
-bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,datasources=NULL)
+ds_utils.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,datasources=NULL)
 {
   mf <- match.call(expand.dots = FALSE)
   arg.names <- names(mf)
@@ -743,7 +753,7 @@ bioshare.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
 #param <NAsubset> (optional): the name of the newly created dataframe.
 #param <datasources> (optional): the datasources (study opal infos) where to do carry the computation. If not specified it will use all server(s)
 
-bioshare.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,datasources=NULL)
+ds_utils.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,datasources=NULL)
 {
   mf <- match.call(expand.dots = FALSE)
   arg.names <- names(mf)
@@ -793,7 +803,7 @@ bioshare.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,data
 
 #this function compute desc statistic: table1d for a factor variable or meansd for a continuous variable
 #across all studies and pool the results
-bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
+ds_utils.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
 {
   if(is.null(datasources)) { datasources = findLoginObjects()}
   ds <- datasources
@@ -881,7 +891,7 @@ bioshare.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
 
 
 #this function computes 2 x 2 table and chi2 
-bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.percent = F, chisq.test = T,split = F,datasources = NULL,...) 
+ds_utils.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.percent = F, chisq.test = T,split = F,datasources = NULL,...) 
 {
   if(missing(x)) stop ('x variable (character) is required ...',call.=F)
   if(missing(y)) stop ('y variable (character) is required ...',call.=F)
@@ -1017,7 +1027,7 @@ bioshare.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
 ##########################################
 
 #clean workspace server side
-bioshare.env$run.rm <- function(x,all=F,datasources=NULL)
+ds_utils.env$run.rm <- function(x,all=F,datasources=NULL)
 {
   if(all) { 
     call <- 'list = ls()'
@@ -1035,7 +1045,7 @@ bioshare.env$run.rm <- function(x,all=F,datasources=NULL)
 
 
 #close everything
-bioshare.env$run.close<-function(all=F)
+ds_utils.env$run.close<-function(all=F)
 {
   #detect opals 
   objs <- ls(name=.GlobalEnv)
@@ -1053,15 +1063,18 @@ bioshare.env$run.close<-function(all=F)
   }
 
  if(as.logical(all)) rm(list=ls(name=.GlobalEnv,all.names=T),envir=.GlobalEnv)
- else rm(bioshare.env,pos=search())  
- detach(bioshare.env,pos=search())
- cat('bioshare environnment is now detached from memory...')  
+ if('ds_utils.env' %in% search()){
+   detach(ds_utils.env,pos=search())
+   cat('utils_analysis environnment is now detached from memory...') 
+ }
+  
+  
 }
 
 
-# attach bioshare env
-attach(bioshare.env)
-
+# attach ds_utils env
+attach(ds_utils.env)
+rm(ds_utils.env)
 
 
 
