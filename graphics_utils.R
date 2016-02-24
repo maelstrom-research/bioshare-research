@@ -1,4 +1,4 @@
-# Source the bioshare environnment
+# Source the DS UTILS environnment
 source('utils_analysis.R',echo=F,print.eval=F)
 #forestplot library
 library('forestplot',quietly=T)
@@ -25,13 +25,18 @@ library('forestplot',quietly=T)
   if(missing(by)) {stop('[by] is mandatory',call.=F)}
   else{info <- by}
   
+  if(missing(datasources)){
+    datasources<-findLoginObjects()
+  }
+  ds <- datasources
+  
   .gl <- function(x) {
     if(grepl('expo',info,T)) {expo <- x}
     else if(grepl('outcome',info,T)) {outcome <- x}
     else if (grepl('model',info,T)) {model <- x}
     else {stop('[by] should be either "expo","outcome" or "model"',call.=F)}
     formul <- run.make.formula(outcome,expo,model,data)
-    run.meta.glm(formul,family=fam,ref=ref,datasources = datasources,...) 
+    run.meta.glm(formul,family=fam,ref=ref,datasources = ds,...) 
   }
   
   if(grepl('expo',info,T)) {
@@ -74,28 +79,28 @@ library('forestplot',quietly=T)
 #.stack.fp.info use a list of glm returned by .glist.by, process and stack them using .fp.info
 # It will return a dataframe ready for forestplot
 
-.stack.fp <- function(glm.list,label,...){                      # <- TODO TODO TODO  ADD NAMES INFOS IN FUNCTION: FIND BEST WAY TO DO THAT 
+.stack.fp <- function(glm.list,fix,...){                      # <- TODO TODO TODO  ADD NAMES INFOS IN FUNCTION: FIND BEST WAY TO DO THAT 
   if(missing(glm.list)) stop('Please provide a valid glm result(s) list...',call.=F)
   glist <- glm.list
   
-  if(missing(label)) stop('Provide a label name ...',call.=F)
-  label <- paste0('**',label,'**')
+  if(missing(fix)) stop('Provide a fix name ...',call.=F)
+  label <- paste0('__',fix,'__')
   k.list <- lapply(glist,.fp.info,...)
   
   k.stack <- rbind(c(NA,NA),Reduce(rbind,k.list))
-  row.names(k.stack) <-c(label, names(glist))
+  row.names(k.stack) <-c(fix, names(glist))
   
   k.stack
 }
 
-.label.fp <- function(glm.list,digit=NULL,label,term = NULL){
+.label.fp <- function(glm.list,digit=NULL,fix,term = NULL){
   if(missing(glm.list)) stop('Please provide a valid glm result(s) list...',call.=F)
   glist <- glm.list
   
   space <-'           '
   
-  if(missing(label)) stop('Provide a label name ...',call.=F)
-  label <- paste0(label,space)
+  if(missing(fix)) stop('Provide a fix name ...',call.=F)
+  fix <- paste0(fix,space)
   
   if(is.null(digit)){digit <- 3}
   
@@ -109,12 +114,31 @@ library('forestplot',quietly=T)
     res.all[term,]
   }
   s.list <- lapply(glist,f)
-  s.stack <- cbind(paste0(space,names(glist)), Reduce(rbind,s.list))
-  rbind(c(label,''),s.stack)
+  estim <-  Reduce(rbind,s.list)
+  labels<- paste0(space,.checklbl(names(glist),literal=.outcomes.lit))
+  s.stack <- cbind(labels, estim)
+  rbind(c(fix,''),s.stack)
+}
+
+
+.checklbl <- function(lbl,literal){
+  names(Filter(function(x)x %in% lbl,literal))
 }
 
 
 
+.outcomes.lit <- c(
+  'Wheeze' = 'SYM_WHEEZ', 
+  'Wheeze without a cold' = 'SYM_WHEEZ_NOCOLD',
+  'Shortness of breath' = 'SYM_SBREATH',
+  'Shortness of breath walking' = 'SYM_SBREATH_WALK',
+  'General breathing problems' = 'SYM_BREATH_PRB',
+  'Phlegm when waking up' ='SYM_PHLEGM_UP',
+  'Phlegm when waking up (almost daily)' = 'SYM_PHLEGM_UP_FREQ',
+  'Phlegm during the day' = 'SYM_PHLEGM_DAY',
+  'Phlegm during the day (almost daily)' = 'SYM_PHLEGM_DAY_FREQ',
+  'Shortness of breath (extended definition)' = 'SYM_SBREATH_EXT'
+)
 
 
 
