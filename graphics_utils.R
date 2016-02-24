@@ -122,25 +122,23 @@ library('forestplot',quietly=T)
 
 
 .checklbl <- function(lbl,literal){
-  names(Filter(function(x)x %in% lbl,literal))
+  f <- function(x,l){l[[x]]}
+  sapply(lbl,f,literal)
 }
 
 
 
 .outcomes.lit <- c(
-  'Wheeze' = 'SYM_WHEEZ', 
-  'Wheeze without a cold' = 'SYM_WHEEZ_NOCOLD',
-  'Shortness of breath at rest' = 'SYM_SBREATH',
-  'Shortness of breath walking' = 'SYM_SBREATH_WALK',
-  'General breathing problems' = 'SYM_BREATH_PRB',
-  'Phlegm when waking up' ='SYM_PHLEGM_UP',
-  'Phlegm when waking up (almost daily)' = 'SYM_PHLEGM_UP_FREQ',
-  'Phlegm during the day' = 'SYM_PHLEGM_DAY',
-  'Phlegm during the day (almost daily)' = 'SYM_PHLEGM_DAY_FREQ',
-  'Shortness of breath (extended definition)' = 'SYM_SBREATH_EXT'
+   'SYM_BREATH_PRB' = 'General breathing problems' ,
+   'SYM_WHEEZ' = 'Wheeze', 
+   'SYM_WHEEZ_NOCOLD' = 'Wheeze without a cold' ,
+   'SYM_SBREATH' = 'Shortness of breath at rest',
+   'SYM_SBREATH_WALK' = 'Shortness of breath walking',
+   'SYM_PHLEGM_UP' = 'Phlegm when waking up',
+   'SYM_PHLEGM_UP_FREQ' = 'Phlegm when waking up (almost daily)' ,
+   'SYM_PHLEGM_DAY' = 'Phlegm during the day',
+   'SYM_PHLEGM_DAY_FREQ' = 'Phlegm during the day (almost daily)' ,
+   'SYM_SBREATH_EXT' = 'Shortness of breath (extended definition)'
 )
-
-
-
 
 

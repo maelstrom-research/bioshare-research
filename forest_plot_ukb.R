@@ -44,7 +44,7 @@ is.summary2 <- c(is.summary,is.summary)
 #--- multi
 forestplot(label2,meta2,new_page = TRUE,is.summary=is.summary2,zero =1,boxsize=.1,graph.pos=2,
            lwd.xaxis=2,
-           txt_gp = fpTxtGp(label = gpar(cex=.70),xlab = gpar(cex = .8),ticks = gpar(cex = .5),title = gpar(cex = .9) ),
+           txt_gp = fpTxtGp(label = gpar(cex=.75),xlab = gpar(cex = .8),ticks = gpar(cex = .5),title = gpar(cex = .9) ),
            line.margin = .01,
            ci.vertices.height = 0.02,
            lwd.zero = 2,
