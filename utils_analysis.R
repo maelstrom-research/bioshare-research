@@ -566,7 +566,14 @@ ds_utils.env$run.model<-function(outcome,expo,model,family,data,Ncases=FALSE,pva
   else if (glm.err) return(message(glm.res))
   else return(glm.res)
   
-  glm.stats$results <- glm.stats$stats[expo,,F]   #<--display variable names and statistics
+  # rewrite if any interaction term
+  expo <- gsub('*',':',expo,fixed=T)
+  glm.stats.estim <- glm.stats$stats
+  coef.names <- row.names(glm.stats.estim)
+  expo <- coef.names[grepl(expo,coef.names,fixed=T)]
+  
+  
+  glm.stats$results <- glm.stats.estim[expo,,F]   #<--display variable names and statistics
   result <- data.frame(glm.stats$results,row.names=gsub('\\s+','',paste(outcome,'~...',expo)))
   
   #print glm stats
