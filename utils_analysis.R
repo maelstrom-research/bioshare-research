@@ -898,9 +898,22 @@ ds_utils.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
   if(is.null(datasources)) datasources = findLoginObjects()
   ds <- datasources
   
+  #ALL PARAM ARE CHECKED #then run the list version if x is a list
+  ### <------------  recursive 
+  if(length(x)>1) {
+    res.list <- lapply(x,run.table2d,y,data, col.percent,row.percent, chisq.test,split,ds,...)
+    names(res.list) <- unlist(x)
+    return (invisible(res.list))
+  }
+  #---end of recursive----
+  
+  
+  
   #get dot dot dot info
   dots <- list(...)
   correct <- if (any(grepl('correct',names(dots)))){ dots$correct}else{F}
+  
+
   #start server side computation
   if(is.null(data)) {
     check.x <- Reduce(all,run.isAssigned(x))
@@ -925,9 +938,13 @@ ds_utils.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
     
     t2.mess <- .vectorize(t2.res,'message')
     t2.bad.idx <- which(grepl('invalid',t2.mess,ignore.case=T))
-    t2.ok <- !(length(t2.bad.idx))
+    
     
     t2d.i <- .vectorize(t2.res,subscript='table',simplify=F)
+    
+    null.study <- names(which(sapply(t2d.i,function(x)all(x==0))))
+    
+    t2.ok <- !length(t2.bad.idx)
     
     #get basic infos
     cnames <- colnames(t2d.i[[1]])
@@ -982,22 +999,33 @@ ds_utils.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
     
     #now compute chisquare test 
     if(chisq.test) {
-      chi2 <-if(!t2.ok) {
-        'Invalid table(s): all entries of the table must be nonnegative and finite'
+      
+      chi2 <- if((!t2.ok)) {
+        'Invalid table(s): all entries of the table must be nonnegative and finite (>5)'
       }else{
         if(with.pooled) {
           Pooled.data <- t2.nomarg$Pooled
-          try(chisq.test(Pooled.data,correct = correct),silent=T)
+          check.cell <- all(Pooled.data > 5)
+          if(check.cell){try(chisq.test(Pooled.data,correct = correct),silent=T)}else{ 'Invalid table(s): some cell value are less (<) than 5 '}
         }else{
           Study.data <- t2.nomarg[[1]]
-          try(chisq.test(Study.data,correct=correct),silent=T)
+          check.cell <- all(Study.data > 5)
+          if(check.cell){try(chisq.test(Study.data,correct = correct),silent=T)}else{ 'Invalid table(s): some cell value are less (<) than 5 '}
         }
       }
-      res <- c(res, list(chi2 = chi2))
       
+      name.chi <- if(with.pooled) { 'Pooled'}else{ names(t2.nomarg[1])}
+      chi2list <- structure(list(chi2),.Names = name.chi)
+      
+      if(with.pooled && length(null.study) ) {
+        warning(paste0('[INDICATION]: ',paste0(null.study,collapse=','),' is(are) excluded from pooled analysis for ',x,' variable'),call.=F)
+      }
+      
+      res <- c(stat = res, chi2 = chi2list)
     }
+    
     return (res)
-  }
+  } #END PROCESS.RESULT
   
   if(split) {
     final <- c()
