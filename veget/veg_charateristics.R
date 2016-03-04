@@ -3,20 +3,8 @@ source('utils_analysis.R',echo=F,print.eval=F)
 
 library(datashieldclient)
 
-#the variables needed for the HOP 
-myvar <- list('DIET_VEGETARIAN', 'DIET_VEGETARIAN_VERIFIED', 'AGE_YRS', 'AGE_YRS_CATEGORICAL', 'GENDER', 'EDU_HIGHEST_1', 'EDU_HIGHEST_2',
-              'WORK_STATUS_CURRENT', 'SMK_CIG_CURRENT', 'ALC_CURRENT', 'PM_BMI_CATEGORIAL', 'PM_WAIST_SIZE', 
-              'PM_SYSTOLIC_MEASURE', 'PM_DIASTOLIC_MEASURE', 'LAB_GLUC_FASTING', 'LAB_HDL', 'LAB_TRIG', 'LAB_hsCRP', 
-              'METABSYNDR_NBR_STRICT', 'METABSYNDR_STRICT', 'METABSYNDR_NBR_MODERATE', 'METABSYNDR_MODERATE', 'HLTH_OBESE_STRICT', 'HLTH_OBESE_MODERATE')
-
-#load loggin information
-load("../login/login-veget.rda")
-
-#only studies participating in MetS and Vegetarian diet:  finrisk, kora, lifelines, mitchelstown, cartagene
-
-
-#login to datashield and assign data to 'D'
-opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
+# LOAD DATAs IN EACH OPAL SERVER
+source('veget_data.R',echo=F,print.eval=F)
 
 
 #Define variable to subset by
