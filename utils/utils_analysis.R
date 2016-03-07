@@ -25,7 +25,7 @@ ds_utils.env$run.isAssigned <- function(obj ,where = NULL,datasources = NULL)
   }else{
     #see if where is present in all ds
     #check.where <- sum(unlist(datashield.symbols(ds)) %in% where)  testing
-    check.where <- Reduce(all,run.isAssigned(where,datasources=ds))
+    check.where <- do.call(all,run.isAssigned(where,datasources=ds))
     if(check.where) {  ############<---------------------
       call('exists',obj,as.name(where)) 
     }else {
@@ -199,7 +199,7 @@ ds_utils.env$run.subset<-function(data = NULL,logic = NULL, cols=NULL,rows =NULL
     one.col <- T #indicator that one column (a variable) should be returned
     X.info <- paste0(data,'$',cols)
     name.X <- paste0(data,'.',cols)
-    check.X <- Reduce(all,run.isAssigned(cols,data,ds))
+    check.X <- do.call(all,run.isAssigned(cols,data,ds))
     
     # vector not dataframe
     if(cols == varsub){
@@ -209,7 +209,7 @@ ds_utils.env$run.subset<-function(data = NULL,logic = NULL, cols=NULL,rows =NULL
     
   }else{
     one.col <- F
-    check.X <- Reduce(all,run.isAssigned(X,datasources=ds))
+    check.X <- do.call(all,run.isAssigned(X,datasources=ds))
   }
   
   #sanity check
@@ -663,12 +663,12 @@ ds_utils.env$run.stack.glm.by <- function(expo,outcome,model,data,fam,ref,by,...
   }
   
   if(grepl('expo',info,T)) {
-    result <- Reduce(rbind,lapply(expo,.ml))
+    result <- do.call(rbind,lapply(expo,.ml))
   }else if(grepl('outcome',info,T)) {
-    result <- Reduce(rbind,lapply(outcome,.ml))
+    result <- do.call(rbind,lapply(outcome,.ml))
   }
   else if (grepl('model',info,T)) {
-    result <- Reduce(rbind,lapply(model,.ml))
+    result <- do.call(rbind,lapply(model,.ml))
   }else {
     stop('[by] should be either "expo","outcome" or "model"',call.=F)
   }
@@ -916,9 +916,9 @@ ds_utils.env$run.table2d <- function(x,y, data = NULL, col.percent = F,row.perce
 
   #start server side computation
   if(is.null(data)) {
-    check.x <- Reduce(all,run.isAssigned(x))
+    check.x <- do.call(all,run.isAssigned(x))
     if(check.x) {
-      check.y <- Reduce(all,run.isAssigned(y))
+      check.y <- do.call(all,run.isAssigned(y))
       if(!check.y) stop (paste0('"',y,'" is not found in some server(s). Did you forget [data] argument ?'))  
     }else {
       stop (paste0('"',x,'" is not assigned in some server(s). Did you forget [data] argument ?')) 
