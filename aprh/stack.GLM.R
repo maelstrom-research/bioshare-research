@@ -5,10 +5,10 @@
 ###############################################################
 
 # Attach the DS UTILS environnment
-source('../bioshare-research/utils/utils_analysis.R',echo=F,print.eval=F)
+source('utils/utils_analysis.R',echo=F,print.eval=F)
 
 # LOAD DATAs IN EACH OPAL SERVER
-source('../bioshare-research/aprh/aprh_data.R',echo=F,print.eval=F)
+source('aprh/aprh_data.R',echo=F,print.eval=F)
 
 
 

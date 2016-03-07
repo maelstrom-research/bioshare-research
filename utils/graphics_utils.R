@@ -1,5 +1,5 @@
 # Source the DS UTILS environnment
-source('utils_analysis.R',echo=F,print.eval=F)
+source('utils/utils_analysis.R',echo=F,print.eval=F)
 #forestplot library
 library('forestplot',quietly=T)
 

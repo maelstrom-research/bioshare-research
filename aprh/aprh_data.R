@@ -14,7 +14,7 @@ myvar<-list('AGE_YRS','AGE_YRS_CATEGORICAL','GENDER','EDU_HIGHEST_2','WORK_STATU
 )
 
 #load loggin information
-load('login-aprh.rda')
+load('aprh/login-aprh.rda')
 #study<-c('lifelines','ukb')
 
 #login to datashield and assign data to 'D' as default

@@ -111,55 +111,7 @@ ds_utils.env$var.assign<-function(opal,datasource,table,variables=NULL)
 #    analytics functions here below 
 ########################################################################################
 
-################ categorical (table2d) for multiple variables ######################
-ds_utils.env$run.cat<-function(subset,vars.list,type = NULL,save=F, print= F)
-{
-  if(missing(subset)) stop('subset variable is required ...',call.=F)
-  if(missing(vars.list)) stop('var(s) is(are) required ...',call.=F)
-  type <- match.arg(type,c('combine','split'))
-  vars.list <-as.list(vars.list)
-    
-  #starting message
-  message(paste0('--',toupper(type),' analysis'))
-  message('--Categorical variables list: \n',paste0(vars.list,collapse='; '))
-  
-  ###preparing progress bar
-  total <- length(vars.list)
-  # create progress bar
-  pb <- txtProgressBar(min = 0, max = total, style = 3)
-  i<-1
-  
-  ####start looping now
-  result<-NULL
-  for(var in vars.list){
-    #compute table2D
-    message(paste0('=> Computing chi-square ',var,' X ',subset,'\nDo not interrupt!...'))
-    chi_square<-ds.table2D(x=paste0('D$',var), y=paste0('D$',subset), type=type,warningMessage=F)   ##### <----- TO CHANGE use my functions
-    
-    #arranging final result
-    w<-structure(list(chi_square),.Names=var)
-    result<-c(result,w)
-    setTxtProgressBar(pb, i)
-    i<-i+1
-  }
-  #close progress bar
-  close(pb)
-  
-  if(as.logical(save)){
-    ##Saving Result object in file versioned
-    date<-format(Sys.Date(),'%d%b%y')
-    resultname<-paste0('Cat_split_',subset,'_',date,'.rda')
-    message(paste0('\n\n***\tSaving Results for Categorical Variables in <',resultname,'> file.'))
-    save(result,file=resultname)
-  }
-  
-  #print result
-  if(as.logical(print)){
-    return(result)
-  }else{
-    return(invisible(result))
-  }
-}
+
 
 
 ##############################################
