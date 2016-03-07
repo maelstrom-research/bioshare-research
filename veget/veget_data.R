@@ -14,7 +14,7 @@ myvar <- list('DIET_VEGETARIAN', 'DIET_VEGETARIAN_VERIFIED', 'AGE_YRS', 'AGE_YRS
 
 
 #load loggin information
-load('login-veget.rda')
+load('veget/login-veget.rda')
 
 #login to datashield and assign data to 'D' as default
 opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)

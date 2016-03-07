@@ -1,10 +1,10 @@
 # Attach the DS UTILS environnment
-source('../bioshare-research/utils/utils_analysis.R',echo=F,print.eval=F)
+source('utils/utils_analysis.R',echo=F,print.eval=F)
 
 library(datashieldclient)
 
 # LOAD DATAs IN EACH OPAL SERVER
-source('../bioshare-research/veget/veget_data.R',echo=F,print.eval=F)
+source('veget/veget_data.R',echo=F,print.eval=F)
 
 
 #Define variable to subset by
