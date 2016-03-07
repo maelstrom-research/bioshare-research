@@ -242,7 +242,7 @@ ds_utils.env$run.subset<-function(data = NULL,logic = NULL, cols=NULL,rows =NULL
 
 
 ########INTERNAL FUNCTION
-ds_utils.env$run.get.subclass<-function(subclass = NULL,vars.list=NULL,data = NULL, datasources=NULL){
+ds_utils.env$run.subclass<-function(subclass = NULL,vars.list=NULL,data = NULL, datasources=NULL){
   
   
   if(is.null(datasources)) datasources <- findLoginObjects()
@@ -760,6 +760,14 @@ ds_utils.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
   if(is.null(datasources)) { datasources = findLoginObjects()}
   ds <- datasources
   
+  ##### cases of a list of variables : recursive
+  if(length(var)>1) {
+    var <- unlist(var)
+    res <- sapply(var,run.desc.stats,data,ds,simplify=F,USE.NAMES=T)
+    print(res)
+    return(invisible(res))
+  }
+  
   #update var to na.data$var
   if(!is.null(data)) var<- paste0(data,'$',var)
   
@@ -769,7 +777,11 @@ ds_utils.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
   is.factor <- class.check == 'factor'
   is.class.null <- class.check == "NULL"
   
+  
   if(is.factor) {
+    
+    message('Running. Please wait...')
+    
     tocall <- paste0('table1dDS(',var,')')
     rs <- datashield.aggregate(ds,as.name(tocall))
     
@@ -787,6 +799,8 @@ ds_utils.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
     res <- data.frame(k,row.names=row.names(rs.tab),stringsAsFactors=F)
     
   }else if (is.num){ #is numeric
+    
+    message('Running. Please wait...')
     
     #tocall <- paste0('quantileMeanDS(',var,')')
     tocallmean <- paste0('meanDS(',var,')')
@@ -834,7 +848,7 @@ ds_utils.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
   
     res <- data.frame(meanSd,row.names=names.w.p,stringsAsFactors=F)
   } else if (is.class.null){
-    stop(paste0('No such variable in ',names(ds[1])),call.=F)
+    stop(paste0('No such variable ',var),call.=F)
   } else {
     stop(paste0('"data" is not specified or "', var, '" is not a valid name'),call.=F)
   } 
