@@ -655,9 +655,11 @@ ds_utils.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   #parsing var.list from glm formula
   vars.list<-strsplit(glm.formula,'\\+|~|\\*|\\|+')
   
+  DATA <- unique(extract(vars.list)$holders)
+  
   if(is.null(NAsubset)){ 
-    data <- unique(extract(vars.list)$holders)
-    NAsubset <- paste0('NA.',data)
+    
+    NAsubset <- paste0('NA.',DATA)
     warning(paste0("NAsubset is not specified ...the subset will be saved in ", NAsubset, " dataframe on server side"),call.=F,immediate.=T)
   }
   
@@ -668,9 +670,9 @@ ds_utils.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   vars.2df<-unlist(vars.list)
   vars.names<-extract(vars.list)$elements
   
-  # create a df for the selected variables
-  cally<-paste0('dataframeDS(cbind(',paste0(vars.2df,collapse=','),')',',NULL,FALSE,TRUE,','c(',paste0("'",vars.names,"'",collapse=','),')',',TRUE,FALSE)')
-  datashield.assign(ds,'RD',as.symbol(cally))
+  # create a df for the selected variables  ---> TO CHANGE HERE WILL run.subset instead
+  cally<-call('subsetDS', dt=DATA, complt=FALSE, rs=NULL, cs=vars.names)
+  datashield.assign(ds,'RD',cally)
   
   # define complete cases boolean var
   callcc<-'complete.cases(RD)'
@@ -704,7 +706,7 @@ ds_utils.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
 #the dataframe comprises only the variables defined in the glm
 #param <formula>: a glm formula (in character) to compute from
 #param <glm.result> (optional if formula is given): a result from a run glm. This is optional when formula is given
-#param <NAsubset> (optional): the name of the newly created dataframe.
+#param <CCsubset> (optional): the name of the newly created dataframe.
 #param <datasources> (optional): the datasources (study opal infos) where to do carry the computation. If not specified it will use all server(s)
 
 ds_utils.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,datasources=NULL)
@@ -722,9 +724,10 @@ ds_utils.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,data
   #parsing var.list from glm formula
   vars.list<-strsplit(glm.formula,'\\+|~|\\*|\\|+')
   
+  DATA <- unique(extract(vars.list)$holders)
+  
   if(is.null(CCsubset)){ 
-    data <- unique(extract(vars.list)$holders)
-    CCsubset <- paste0('CC.',data)
+    CCsubset <- paste0('CC.',DATA)
     warning(paste0("CCsubset is not specified ...the subset will be saved in ", CCsubset, " dataframe on server side"),call.=F,immediate.=T)
   }
   
@@ -732,21 +735,12 @@ ds_utils.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,data
   ds <- datasources
   
   #define vars.2df and vars.names from var.list 
-  vars.2df<-unlist(vars.list)
   vars.names<-extract(vars.list)$elements
   
   #do the subset and completecases
-  cally<-paste0('dataframeDS(cbind(',paste0(vars.2df,collapse=','),')',',NULL,FALSE,TRUE,','c(',paste0("'",vars.names,"'",collapse=','),')',',TRUE,TRUE)')
-  datashield.assign(ds, CCsubset, as.symbol(cally))
+  suppressMessages(run.subset(data=DATA,cols=vars.names,completeCases=T,subsetName=CCsubset))  #<- dependency to run.subset
   
-  #clean server workspace
-  to_rm <- c("complt","cs","dt","rs")
-  run.rm(to_rm,datasources=ds)
-  
-  #info to user
-  cat(paste0("You may check the assigned ",CCsubset," dataframe with the following datashield commands: 
-   run.isAssigned('",CCsubset,"'), ds.colnames('",CCsubset,"') AND ds.dim('",CCsubset,"')")) 
-  
+  #return the name of the assigned df
   return(invisible(CCsubset))
 }
 
