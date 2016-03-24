@@ -1068,7 +1068,7 @@ ds_utils.env$run.close<-function(all=F)
 
 # attach ds_utils env
 attach(ds_utils.env)
-if('ds_utils.env' %in% search()) {message('ds_utils.env is correctly Sourced...')}
+if('ds_utils.env' %in% search()) {message('ds_utils.env is correctly loaded...')}
 rm(ds_utils.env)
 
 
