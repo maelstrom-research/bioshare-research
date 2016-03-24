@@ -126,6 +126,8 @@ ds_utils.env$run.subset<-function(data = NULL,logic = NULL, cols=NULL,rows =NULL
   #verify data
   if(is.null(data)) {stop('Please specify the data(dataframe) to subset',call.=F)}
   
+  cols <- unlist(cols)
+  
   has.col.row <- !(is.null(cols) && is.null(rows))
   has.default <- has.col.row || !is.null(logic)
   
