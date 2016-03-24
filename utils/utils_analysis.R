@@ -126,6 +126,8 @@ ds_utils.env$run.subset<-function(data = NULL,logic = NULL, cols=NULL,rows =NULL
   #verify data
   if(is.null(data)) {stop('Please specify the data(dataframe) to subset',call.=F)}
   
+  cols <- unlist(cols)
+  
   has.col.row <- !(is.null(cols) && is.null(rows))
   has.default <- has.col.row || !is.null(logic)
   
@@ -653,9 +655,11 @@ ds_utils.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   #parsing var.list from glm formula
   vars.list<-strsplit(glm.formula,'\\+|~|\\*|\\|+')
   
+  DATA <- unique(extract(vars.list)$holders)
+  
   if(is.null(NAsubset)){ 
-    data <- unique(extract(vars.list)$holders)
-    NAsubset <- paste0('NA.',data)
+    
+    NAsubset <- paste0('NA.',DATA)
     warning(paste0("NAsubset is not specified ...the subset will be saved in ", NAsubset, " dataframe on server side"),call.=F,immediate.=T)
   }
   
@@ -666,9 +670,9 @@ ds_utils.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   vars.2df<-unlist(vars.list)
   vars.names<-extract(vars.list)$elements
   
-  # create a df for the selected variables
-  cally<-paste0('dataframeDS(cbind(',paste0(vars.2df,collapse=','),')',',NULL,FALSE,TRUE,','c(',paste0("'",vars.names,"'",collapse=','),')',',TRUE,FALSE)')
-  datashield.assign(ds,'RD',as.symbol(cally))
+  # create a df for the selected variables  ---> TO CHANGE HERE WILL run.subset instead
+  cally<-call('subsetDS', dt=DATA, complt=FALSE, rs=NULL, cs=vars.names)
+  datashield.assign(ds,'RD',cally)
   
   # define complete cases boolean var
   callcc<-'complete.cases(RD)'
@@ -688,7 +692,7 @@ ds_utils.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   
   #info to user
   cat(paste0("You may check the assigned ",NAsubset," dataframe with the following datashield commands: 
-   datashield.symbols(opals), ds.colnames('",NAsubset,"') AND ds.dim('",NAsubset,"')")) 
+   run.isAssigned('",NAsubset,"'), ds.colnames('",NAsubset,"') AND ds.dim('",NAsubset,"')")) 
   
   return(invisible(NAsubset))
 }
@@ -702,7 +706,7 @@ ds_utils.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
 #the dataframe comprises only the variables defined in the glm
 #param <formula>: a glm formula (in character) to compute from
 #param <glm.result> (optional if formula is given): a result from a run glm. This is optional when formula is given
-#param <NAsubset> (optional): the name of the newly created dataframe.
+#param <CCsubset> (optional): the name of the newly created dataframe.
 #param <datasources> (optional): the datasources (study opal infos) where to do carry the computation. If not specified it will use all server(s)
 
 ds_utils.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,datasources=NULL)
@@ -720,9 +724,10 @@ ds_utils.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,data
   #parsing var.list from glm formula
   vars.list<-strsplit(glm.formula,'\\+|~|\\*|\\|+')
   
+  DATA <- unique(extract(vars.list)$holders)
+  
   if(is.null(CCsubset)){ 
-    data <- unique(extract(vars.list)$holders)
-    CCsubset <- paste0('CC.',data)
+    CCsubset <- paste0('CC.',DATA)
     warning(paste0("CCsubset is not specified ...the subset will be saved in ", CCsubset, " dataframe on server side"),call.=F,immediate.=T)
   }
   
@@ -730,21 +735,12 @@ ds_utils.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,data
   ds <- datasources
   
   #define vars.2df and vars.names from var.list 
-  vars.2df<-unlist(vars.list)
   vars.names<-extract(vars.list)$elements
   
   #do the subset and completecases
-  cally<-paste0('dataframeDS(cbind(',paste0(vars.2df,collapse=','),')',',NULL,FALSE,TRUE,','c(',paste0("'",vars.names,"'",collapse=','),')',',TRUE,TRUE)')
-  datashield.assign(ds, CCsubset, as.symbol(cally))
+  suppressMessages(run.subset(data=DATA,cols=vars.names,completeCases=T,subsetName=CCsubset))  #<- dependency to run.subset
   
-  #clean server workspace
-  to_rm <- c("complt","cs","dt","rs")
-  run.rm(to_rm,datasources=ds)
-  
-  #info to user
-  cat(paste0("You may check the assigned ",CCsubset," dataframe with the following datashield commands: 
-   datashield.symbols(opals), ds.colnames('",CCsubset,"') AND ds.dim('",CCsubset,"')")) 
-  
+  #return the name of the assigned df
   return(invisible(CCsubset))
 }
 
@@ -753,107 +749,139 @@ ds_utils.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,data
 
 #####################-----------STATS --------------------####################################
 
-#this function compute desc statistic: table1d for a factor variable or meansd for a continuous variable
+#this function compute desc statistic:  meansd for a continuous variable
 #across all studies and pool the results
-ds_utils.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
+#
+ds_utils.env$run.meanSd<-function(var,data = NULL,datasources = NULL)
 {
   if(is.null(datasources)) { datasources = findLoginObjects()}
   ds <- datasources
   
+  if(missing(var)) stop('var is required.',call.=F)
+  
   ##### cases of a list of variables : recursive
   if(length(var)>1) {
     var <- unlist(var)
-    res <- sapply(var,run.desc.stats,data,ds,simplify=F,USE.NAMES=T)
+    res <- sapply(var,run.meanSd,data,ds,simplify=F,USE.NAMES=T)
     print(res)
     return(invisible(res))
   }
   
-  #update var to na.data$var
-  if(!is.null(data)) var<- paste0(data,'$',var)
+  #check data and update var
+  if(!is.null(data)) {
+    var<- paste0(data,'$',var)
+  }else {
+    DATA <- extract(var)$holders
+    if(is.na(DATA)) stop('data is required',call.=F)
+    data.exist <- do.call(all,run.isAssigned(DATA,datasources=ds))
+    if(!data.exist) stop (paste0('"',DATA,'"',' is not present in some server(s)'),call.=F)
+  }
   
-  class.check <- try(checkClass(ds[1],var),silent=T)
-  class.err <- inherits(class.check,what='try-error')
-  is.num <- class.check %in% c('integer','numeric')
-  is.factor <- class.check == 'factor'
-  is.class.null <- class.check == "NULL"
+  message('Running. Please wait...')
+  
+  #tocall <- paste0('quantileMeanDS(',var,')')
+  tocallmean <- paste0('meanDS(',var,')')
+  tocallength <- paste0('length(',var,')')
+  tocallnumna<-paste0('numNaDS(',var,')')
+  tocallvar <- paste0('varDS(',var,')')
+  rs.mean <- .vectorize(datashield.aggregate(ds,as.name(tocallmean)),1); 
+  rs.numna <- .vectorize(datashield.aggregate(ds,as.name(tocallnumna)),1)
+  rs.length <- .vectorize(datashield.aggregate(ds,as.name(tocallength)),1)
+  rs.var <- .vectorize(datashield.aggregate(ds,as.name(tocallvar)),1)
+  
+  validN <- rs.length - rs.numna 
+  
+  .var.pooled <- function(variances,means,weights )
+  {
+    v<- variances
+    m <- means
+    l <- weights
+    l.minus1 <- l-1
+    m.total <- weighted.mean(m,l)
+    err.ss <- sum(l.minus1*v) # overall error sum of squares
+    tg.ss <- sum(l*(m-m.total)^2) # total (overall) group sum of squares
+    l.total <- sum(l)
+    v.total <- (err.ss + tg.ss)/(l.total-1)
+    #s.ag <- sqrt(v.ag)
+    return (v.total)
+  }
   
   
-  if(is.factor) {
-    
-    message('Running. Please wait...')
-    
-    tocall <- paste0('table1dDS(',var,')')
-    rs <- datashield.aggregate(ds,as.name(tocall))
-    
-    #XXXXXXXX 
-    rs.tab<-.vectorize(rs,'table')
-    rs.mess <- .vectorize(rs,'message')
-    #get the message validity
-    rs.ok <- !any(grepl('invalid',rs.mess,ignore.case=T))
-    #compute pooled tab
-    Pooled <- apply(rs.tab,1,function(x) sum(as.numeric(x)))
-    
-    #put everything together
-    rs.tab.with.pooled <- cbind(rs.tab,Pooled)
-    k <- apply(rs.tab.with.pooled,2,function(x) {x<-as.numeric(x); pct <- round(x/x[length(x)]*100,2); paste0(pct,'(n = ',x,')')})
-    res <- data.frame(k,row.names=row.names(rs.tab),stringsAsFactors=F)
-    
-  }else if (is.num){ #is numeric
-    
-    message('Running. Please wait...')
-    
-    #tocall <- paste0('quantileMeanDS(',var,')')
-    tocallmean <- paste0('meanDS(',var,')')
-    tocallength <- paste0('length(',var,')')
-    tocallnumna<-paste0('numNaDS(',var,')')
-    tocallvar <- paste0('varDS(',var,')')
-    rs.mean <- .vectorize(datashield.aggregate(ds,as.name(tocallmean)),1); 
-    rs.numna <- .vectorize(datashield.aggregate(ds,as.name(tocallnumna)),1)
-    rs.length <- .vectorize(datashield.aggregate(ds,as.name(tocallength)),1)
-    rs.var <- .vectorize(datashield.aggregate(ds,as.name(tocallvar)),1)
-    
-    validN <- rs.length - rs.numna 
-    
-    .var.pooled <- function(variances,means,weights )
-    {
-      v<- variances
-      m <- means
-      l <- weights
-      l.minus1 <- l-1
-      m.total <- weighted.mean(m,l)
-      err.ss <- sum(l.minus1*v) # overall error sum of squares
-      tg.ss <- sum(l*(m-m.total)^2) # total (overall) group sum of squares
-      l.total <- sum(l)
-      v.total <- (err.ss + tg.ss)/(l.total-1)
-      #s.ag <- sqrt(v.ag)
-      return (v.total)
-    }
-    
+  rs.mean.agg <- weighted.mean(rs.mean,validN,na.rm=T)
+  rs.var.agg <- .var.pooled(rs.var, rs.mean, validN)
+  validN.agg <- sum(validN)
+  names.w.p <- c(names(ds),'Pooled')
   
-    rs.mean.agg <- weighted.mean(rs.mean,validN,na.rm=T)
-    rs.var.agg <- .var.pooled(rs.var, rs.mean, validN)
-    validN.agg <- sum(validN)
-    names.w.p <- c(names(ds),'Pooled')
-    
-    rs.mean.with.pooled <- c(rs.mean,rs.mean.agg)
-    names(rs.mean.with.pooled) <- names.w.p
-    rs.var.with.pooled <- c(rs.var,rs.var.agg)
-    names(rs.var.with.pooled) <- names.w.p
-    validN.w.p <- c(validN,validN.agg) 
-    names(validN.w.p) <- names.w.p
-     
-    sd.w.p<-round(sqrt(rs.var.with.pooled),2)
-    m.w.p <- round(rs.mean.with.pooled,2) 
-    meanSd <- paste0(m.w.p,'(',sd.w.p,') (n = ',validN.w.p,')')
+  rs.mean.with.pooled <- c(rs.mean,rs.mean.agg)
+  names(rs.mean.with.pooled) <- names.w.p
+  rs.var.with.pooled <- c(rs.var,rs.var.agg)
+  names(rs.var.with.pooled) <- names.w.p
+  validN.w.p <- c(validN,validN.agg) 
+  names(validN.w.p) <- names.w.p
   
-    res <- data.frame(meanSd,row.names=names.w.p,stringsAsFactors=F)
-  } else if (is.class.null){
-    stop(paste0('No such variable ',var),call.=F)
-  } else {
-    stop(paste0('"data" is not specified or "', var, '" is not a valid name'),call.=F)
-  } 
+  sd.w.p<-round(sqrt(rs.var.with.pooled),2)
+  m.w.p <- round(rs.mean.with.pooled,2) 
+  meanSd <- paste0(m.w.p,'(',sd.w.p,') (n = ',validN.w.p,')')
+  
+  res <- data.frame(meanSd,row.names=names.w.p,stringsAsFactors=F)
+  
   res
 }
+
+
+#this function compute desc statistic: table1d for a factor variable
+#across all studies and pool the results
+#
+ds_utils.env$run.table1d<-function(var,data = NULL,datasources = NULL)
+{
+  if(is.null(datasources)) { datasources = findLoginObjects()}
+  ds <- datasources
+  
+  if(missing(var)) stop('var is required.',call.=F)
+  
+  ##### cases of a list of variables : recursive
+  if(length(var)>1) {
+    var <- unlist(var)
+    res <- sapply(var,run.table1d,data,ds,simplify=F,USE.NAMES=T)
+    print(res)
+    return(invisible(res))
+  }
+  
+  #check data and update var
+  if(!is.null(data)) {
+    var<- paste0(data,'$',var)
+  }else {
+    DATA <- extract(var)$holders
+    if(is.na(DATA)) stop('data is required',call.=F)
+    data.exist <- do.call(all,run.isAssigned(DATA,datasources=ds))
+    if(!data.exist) stop (paste0('"',DATA,'"',' is not present in some server(s)'),call.=F)
+  }
+  
+  message('Running. Please wait...')
+  
+  tocall <- paste0('table1dDS(',var,')')
+  rs <- datashield.aggregate(ds,as.name(tocall))
+  
+  #XXXXXXXX 
+  rs.tab<-.vectorize(rs,'table')
+  rs.mess <- .vectorize(rs,'message')
+  #get the message validity
+  rs.ok <- !any(grepl('invalid',rs.mess,ignore.case=T))
+  #compute pooled tab
+  Pooled <- apply(rs.tab,1,function(x) sum(as.numeric(x)))
+  
+  #put everything together
+  rs.tab.with.pooled <- cbind(rs.tab,Pooled)
+  k <- apply(rs.tab.with.pooled,2,function(x) {x<-as.numeric(x); pct <- round(x/x[length(x)]*100,2); paste0(pct,'(n = ',x,')')})
+  res <- data.frame(k,row.names=row.names(rs.tab),stringsAsFactors=F)
+  
+  return (res)
+}
+
+
+
+
+
 
 
 #this function computes 2 x 2 table and chi2 
@@ -1068,6 +1096,7 @@ ds_utils.env$run.close<-function(all=F)
 
 # attach ds_utils env
 attach(ds_utils.env)
+if('ds_utils.env' %in% search()) {message('ds_utils.env is correctly loaded...')}
 rm(ds_utils.env)
 
 
