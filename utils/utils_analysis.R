@@ -688,7 +688,7 @@ ds_utils.env$run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,dataso
   
   #info to user
   cat(paste0("You may check the assigned ",NAsubset," dataframe with the following datashield commands: 
-   datashield.symbols(opals), ds.colnames('",NAsubset,"') AND ds.dim('",NAsubset,"')")) 
+   run.isAssigned('",NAsubset,"'), ds.colnames('",NAsubset,"') AND ds.dim('",NAsubset,"')")) 
   
   return(invisible(NAsubset))
 }
@@ -743,7 +743,7 @@ ds_utils.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,data
   
   #info to user
   cat(paste0("You may check the assigned ",CCsubset," dataframe with the following datashield commands: 
-   datashield.symbols(opals), ds.colnames('",CCsubset,"') AND ds.dim('",CCsubset,"')")) 
+   run.isAssigned('",CCsubset,"'), ds.colnames('",CCsubset,"') AND ds.dim('",CCsubset,"')")) 
   
   return(invisible(CCsubset))
 }
@@ -753,107 +753,139 @@ ds_utils.env$run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,data
 
 #####################-----------STATS --------------------####################################
 
-#this function compute desc statistic: table1d for a factor variable or meansd for a continuous variable
+#this function compute desc statistic:  meansd for a continuous variable
 #across all studies and pool the results
-ds_utils.env$run.desc.stats<-function(var,data = NULL,datasources = NULL)
+#
+ds_utils.env$run.meanSd<-function(var,data = NULL,datasources = NULL)
 {
   if(is.null(datasources)) { datasources = findLoginObjects()}
   ds <- datasources
   
+  if(missing(var)) stop('var is required.',call.=F)
+  
   ##### cases of a list of variables : recursive
   if(length(var)>1) {
     var <- unlist(var)
-    res <- sapply(var,run.desc.stats,data,ds,simplify=F,USE.NAMES=T)
+    res <- sapply(var,run.meanSd,data,ds,simplify=F,USE.NAMES=T)
     print(res)
     return(invisible(res))
   }
   
-  #update var to na.data$var
-  if(!is.null(data)) var<- paste0(data,'$',var)
+  #check data and update var
+  if(!is.null(data)) {
+    var<- paste0(data,'$',var)
+  }else {
+    DATA <- extract(var)$holders
+    if(is.na(DATA)) stop('data is required',call.=F)
+    data.exist <- do.call(all,run.isAssigned(DATA))
+    if(!data.exist) stop (paste0('"',DATA,'"',' is not present in some server(s)'),call.=F)
+  }
   
-  class.check <- try(checkClass(ds[1],var),silent=T)
-  class.err <- inherits(class.check,what='try-error')
-  is.num <- class.check %in% c('integer','numeric')
-  is.factor <- class.check == 'factor'
-  is.class.null <- class.check == "NULL"
+  message('Running. Please wait...')
+  
+  #tocall <- paste0('quantileMeanDS(',var,')')
+  tocallmean <- paste0('meanDS(',var,')')
+  tocallength <- paste0('length(',var,')')
+  tocallnumna<-paste0('numNaDS(',var,')')
+  tocallvar <- paste0('varDS(',var,')')
+  rs.mean <- .vectorize(datashield.aggregate(ds,as.name(tocallmean)),1); 
+  rs.numna <- .vectorize(datashield.aggregate(ds,as.name(tocallnumna)),1)
+  rs.length <- .vectorize(datashield.aggregate(ds,as.name(tocallength)),1)
+  rs.var <- .vectorize(datashield.aggregate(ds,as.name(tocallvar)),1)
+  
+  validN <- rs.length - rs.numna 
+  
+  .var.pooled <- function(variances,means,weights )
+  {
+    v<- variances
+    m <- means
+    l <- weights
+    l.minus1 <- l-1
+    m.total <- weighted.mean(m,l)
+    err.ss <- sum(l.minus1*v) # overall error sum of squares
+    tg.ss <- sum(l*(m-m.total)^2) # total (overall) group sum of squares
+    l.total <- sum(l)
+    v.total <- (err.ss + tg.ss)/(l.total-1)
+    #s.ag <- sqrt(v.ag)
+    return (v.total)
+  }
   
   
-  if(is.factor) {
-    
-    message('Running. Please wait...')
-    
-    tocall <- paste0('table1dDS(',var,')')
-    rs <- datashield.aggregate(ds,as.name(tocall))
-    
-    #XXXXXXXX 
-    rs.tab<-.vectorize(rs,'table')
-    rs.mess <- .vectorize(rs,'message')
-    #get the message validity
-    rs.ok <- !any(grepl('invalid',rs.mess,ignore.case=T))
-    #compute pooled tab
-    Pooled <- apply(rs.tab,1,function(x) sum(as.numeric(x)))
-    
-    #put everything together
-    rs.tab.with.pooled <- cbind(rs.tab,Pooled)
-    k <- apply(rs.tab.with.pooled,2,function(x) {x<-as.numeric(x); pct <- round(x/x[length(x)]*100,2); paste0(pct,'(n = ',x,')')})
-    res <- data.frame(k,row.names=row.names(rs.tab),stringsAsFactors=F)
-    
-  }else if (is.num){ #is numeric
-    
-    message('Running. Please wait...')
-    
-    #tocall <- paste0('quantileMeanDS(',var,')')
-    tocallmean <- paste0('meanDS(',var,')')
-    tocallength <- paste0('length(',var,')')
-    tocallnumna<-paste0('numNaDS(',var,')')
-    tocallvar <- paste0('varDS(',var,')')
-    rs.mean <- .vectorize(datashield.aggregate(ds,as.name(tocallmean)),1); 
-    rs.numna <- .vectorize(datashield.aggregate(ds,as.name(tocallnumna)),1)
-    rs.length <- .vectorize(datashield.aggregate(ds,as.name(tocallength)),1)
-    rs.var <- .vectorize(datashield.aggregate(ds,as.name(tocallvar)),1)
-    
-    validN <- rs.length - rs.numna 
-    
-    .var.pooled <- function(variances,means,weights )
-    {
-      v<- variances
-      m <- means
-      l <- weights
-      l.minus1 <- l-1
-      m.total <- weighted.mean(m,l)
-      err.ss <- sum(l.minus1*v) # overall error sum of squares
-      tg.ss <- sum(l*(m-m.total)^2) # total (overall) group sum of squares
-      l.total <- sum(l)
-      v.total <- (err.ss + tg.ss)/(l.total-1)
-      #s.ag <- sqrt(v.ag)
-      return (v.total)
-    }
-    
+  rs.mean.agg <- weighted.mean(rs.mean,validN,na.rm=T)
+  rs.var.agg <- .var.pooled(rs.var, rs.mean, validN)
+  validN.agg <- sum(validN)
+  names.w.p <- c(names(ds),'Pooled')
   
-    rs.mean.agg <- weighted.mean(rs.mean,validN,na.rm=T)
-    rs.var.agg <- .var.pooled(rs.var, rs.mean, validN)
-    validN.agg <- sum(validN)
-    names.w.p <- c(names(ds),'Pooled')
-    
-    rs.mean.with.pooled <- c(rs.mean,rs.mean.agg)
-    names(rs.mean.with.pooled) <- names.w.p
-    rs.var.with.pooled <- c(rs.var,rs.var.agg)
-    names(rs.var.with.pooled) <- names.w.p
-    validN.w.p <- c(validN,validN.agg) 
-    names(validN.w.p) <- names.w.p
-     
-    sd.w.p<-round(sqrt(rs.var.with.pooled),2)
-    m.w.p <- round(rs.mean.with.pooled,2) 
-    meanSd <- paste0(m.w.p,'(',sd.w.p,') (n = ',validN.w.p,')')
+  rs.mean.with.pooled <- c(rs.mean,rs.mean.agg)
+  names(rs.mean.with.pooled) <- names.w.p
+  rs.var.with.pooled <- c(rs.var,rs.var.agg)
+  names(rs.var.with.pooled) <- names.w.p
+  validN.w.p <- c(validN,validN.agg) 
+  names(validN.w.p) <- names.w.p
   
-    res <- data.frame(meanSd,row.names=names.w.p,stringsAsFactors=F)
-  } else if (is.class.null){
-    stop(paste0('No such variable ',var),call.=F)
-  } else {
-    stop(paste0('"data" is not specified or "', var, '" is not a valid name'),call.=F)
-  } 
+  sd.w.p<-round(sqrt(rs.var.with.pooled),2)
+  m.w.p <- round(rs.mean.with.pooled,2) 
+  meanSd <- paste0(m.w.p,'(',sd.w.p,') (n = ',validN.w.p,')')
+  
+  res <- data.frame(meanSd,row.names=names.w.p,stringsAsFactors=F)
+  
   res
 }
+
+
+#this function compute desc statistic: table1d for a factor variable
+#across all studies and pool the results
+#
+ds_utils.env$run.table1d<-function(var,data = NULL,datasources = NULL)
+{
+  if(is.null(datasources)) { datasources = findLoginObjects()}
+  ds <- datasources
+  
+  if(missing(var)) stop('var is required.',call.=F)
+  
+  ##### cases of a list of variables : recursive
+  if(length(var)>1) {
+    var <- unlist(var)
+    res <- sapply(var,run.table1d,data,ds,simplify=F,USE.NAMES=T)
+    print(res)
+    return(invisible(res))
+  }
+  
+  #check data and update var
+  if(!is.null(data)) {
+    var<- paste0(data,'$',var)
+  }else {
+    DATA <- extract(var)$holders
+    if(is.na(DATA)) stop('data is required',call.=F)
+    data.exist <- do.call(all,run.isAssigned(DATA))
+    if(!data.exist) stop (paste0('"',DATA,'"',' is not present in some server(s)'),call.=F)
+  }
+  
+  message('Running. Please wait...')
+  
+  tocall <- paste0('table1dDS(',var,')')
+  rs <- datashield.aggregate(ds,as.name(tocall))
+  
+  #XXXXXXXX 
+  rs.tab<-.vectorize(rs,'table')
+  rs.mess <- .vectorize(rs,'message')
+  #get the message validity
+  rs.ok <- !any(grepl('invalid',rs.mess,ignore.case=T))
+  #compute pooled tab
+  Pooled <- apply(rs.tab,1,function(x) sum(as.numeric(x)))
+  
+  #put everything together
+  rs.tab.with.pooled <- cbind(rs.tab,Pooled)
+  k <- apply(rs.tab.with.pooled,2,function(x) {x<-as.numeric(x); pct <- round(x/x[length(x)]*100,2); paste0(pct,'(n = ',x,')')})
+  res <- data.frame(k,row.names=row.names(rs.tab),stringsAsFactors=F)
+  
+  return (res)
+}
+
+
+
+
+
 
 
 #this function computes 2 x 2 table and chi2 
