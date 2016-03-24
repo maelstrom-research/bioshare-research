@@ -777,7 +777,7 @@ ds_utils.env$run.meanSd<-function(var,data = NULL,datasources = NULL)
   }else {
     DATA <- extract(var)$holders
     if(is.na(DATA)) stop('data is required',call.=F)
-    data.exist <- do.call(all,run.isAssigned(DATA))
+    data.exist <- do.call(all,run.isAssigned(DATA,datasources=ds))
     if(!data.exist) stop (paste0('"',DATA,'"',' is not present in some server(s)'),call.=F)
   }
   
@@ -857,7 +857,7 @@ ds_utils.env$run.table1d<-function(var,data = NULL,datasources = NULL)
   }else {
     DATA <- extract(var)$holders
     if(is.na(DATA)) stop('data is required',call.=F)
-    data.exist <- do.call(all,run.isAssigned(DATA))
+    data.exist <- do.call(all,run.isAssigned(DATA,datasources=ds))
     if(!data.exist) stop (paste0('"',DATA,'"',' is not present in some server(s)'),call.=F)
   }
   
