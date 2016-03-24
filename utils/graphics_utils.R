@@ -142,3 +142,6 @@ library('forestplot',quietly=T)
 )
 
 
+
+
+message('All required graphics functions are loaded...')
