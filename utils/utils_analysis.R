@@ -772,9 +772,11 @@ ds_utils.env$run.meanSd<-function(var,data = NULL,datasources = NULL)
     var<- paste0(data,'$',var)
   }else {
     DATA <- extract(var)$holders
-    if(is.na(DATA)) stop('data is required',call.=F)
-    data.exist <- do.call(all,run.isAssigned(DATA,datasources=ds))
-    if(!data.exist) stop (paste0('"',DATA,'"',' is not present in some server(s)'),call.=F)
+    if(is.na(DATA)) {
+      var.exist <- do.call(all,run.isAssigned(var,datasources=ds))
+      if(!var.exist) stop (paste0('"',var,'"',' is not present in some server(s)'),call.=F)
+    }
+    
   }
   
   message('Running. Please wait...')
@@ -852,9 +854,11 @@ ds_utils.env$run.table1d<-function(var,data = NULL,datasources = NULL)
     var<- paste0(data,'$',var)
   }else {
     DATA <- extract(var)$holders
-    if(is.na(DATA)) stop('data is required',call.=F)
-    data.exist <- do.call(all,run.isAssigned(DATA,datasources=ds))
-    if(!data.exist) stop (paste0('"',DATA,'"',' is not present in some server(s)'),call.=F)
+    if(is.na(DATA)) {
+      var.exist <- do.call(all,run.isAssigned(var,datasources=ds))
+      if(!var.exist) stop (paste0('"',var,'"',' is not present in some server(s)'),call.=F)
+    }
+    
   }
   
   message('Running. Please wait...')
