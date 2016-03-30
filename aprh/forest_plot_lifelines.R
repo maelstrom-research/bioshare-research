@@ -35,11 +35,11 @@ gstack.no2 <- .glist.by('NO2_ESCAPE',outcome=outcomes.c,model=model,data='D',fam
 #--- getting forestplot meta-data  ready---
 meta.pm25 <- .stack.fp(gstack.pm25,fix='PM2.5')
 meta.pmco <- .stack.fp(gstack.pmco,fix='PMcoarse')
-meta.no2 <- .stack.fp(gstack.pmco,fix='NO2')
+meta.no2 <- .stack.fp(gstack.no2,fix='NO2')
 
 labeltxt.pm25 <- .label.fp(gstack.pm25,fix='PM2.5')
 labeltxt.pmco <- .label.fp(gstack.pmco,fix='PMcoarse')
-labeltxt.no2 <- .label.fp(gstack.pmco,fix='NO2')
+labeltxt.no2 <- .label.fp(gstack.no2,fix='NO2')
 
 
 is.summary <- c(T,rep(F,nrow(meta.pm25)-1))
