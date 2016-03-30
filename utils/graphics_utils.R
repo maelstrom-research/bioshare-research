@@ -138,7 +138,7 @@ library('forestplot',quietly=T)
    'SYM_PHLEGM_UP_FREQ' = 'Phlegm when waking up (almost daily)' ,
    'SYM_PHLEGM_DAY' = 'Phlegm during the day',
    'SYM_PHLEGM_DAY_FREQ' = 'Phlegm during the day (almost daily)' ,
-   'SYM_SBREATH_EXT' = 'Shortness of breath (extended definition)'
+   'SYM_SBREATH_EXT' = 'Shortness of breath at rest or walking'
 )
 
 
