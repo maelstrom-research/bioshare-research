@@ -45,15 +45,15 @@ labeltxt.no2 <- .label.fp(gstack.no2,fix='NO2')
 is.summary <- c(T,rep(F,nrow(meta.pm25)-1))
 
 ####### combine pm2.5 and pmcoarse
-meta2 <- rbind(meta.pm25,meta.pmco,meta.no2)
-label2<- rbind(labeltxt.pm25,labeltxt.pmco,labeltxt.no2)
-is.summary2 <- c(is.summary,is.summary)
+meta.c <- rbind(meta.pm25,meta.pmco,meta.no2)
+label.c<- rbind(labeltxt.pm25,labeltxt.pmco,labeltxt.no2)
+is.summary.c <- c(is.summary,is.summary)
 
 
 #--------------------plotting -------------
 
 #--- multi
-forestplot(label2,meta2,new_page = TRUE,is.summary=is.summary2,zero =1,boxsize=.1,graph.pos=2,
+forestplot(label.c,meta.c,new_page = TRUE,is.summary=is.summary2,zero =1,boxsize=.1,graph.pos=2,
            lwd.xaxis=2,
            txt_gp = fpTxtGp(label = gpar(cex=.75),xlab = gpar(cex = .8),ticks = gpar(cex = .5),summary = gpar(cex = .8),title = gpar(cex = .9) ),
            line.margin = .01,
