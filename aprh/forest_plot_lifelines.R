@@ -12,7 +12,7 @@ source('aprh/aprh_data.R',echo=F,print.eval=F)
 #--- stacking coefficient regression for forestplot ----
 expos.c <- c('PM25_ESCAPE','PM10_ESC','NO2_ESCAPE','PMcoarse_ESCAPE')
 outcomes.c <- c(
-  'SYM_BREATH_PRB',
+  #'SYM_BREATH_PRB',
   'SYM_WHEEZ', 
   'SYM_WHEEZ_NOCOLD',
   'SYM_SBREATH',
@@ -30,21 +30,23 @@ model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_
 
 gstack.pm25 <- .glist.by('PM25_ESCAPE',outcome=outcomes.c,model=model,data='D',fam='binomial',by='outcome',datasources=opals[1])
 gstack.pmco <- .glist.by('PMcoarse_ESCAPE',outcome=outcomes.c,model=model,data='D',fam='binomial',by='outcome',datasources=opals[1])
+gstack.no2 <- .glist.by('NO2_ESCAPE',outcome=outcomes.c,model=model,data='D',fam='binomial',by='outcome',datasources=opals[1])
 
 #--- getting forestplot meta-data  ready---
 meta.pm25 <- .stack.fp(gstack.pm25,fix='PM2.5')
 meta.pmco <- .stack.fp(gstack.pmco,fix='PMcoarse')
+meta.no2 <- .stack.fp(gstack.no2,fix='NO2')
 
 labeltxt.pm25 <- .label.fp(gstack.pm25,fix='PM2.5')
 labeltxt.pmco <- .label.fp(gstack.pmco,fix='PMcoarse')
-
+labeltxt.no2 <- .label.fp(gstack.no2,fix='NO2')
 
 
 is.summary <- c(T,rep(F,nrow(meta.pm25)-1))
 
 ####### combine pm2.5 and pmcoarse
-meta2 <- rbind(meta.pm25,meta.pmco)
-label2<- rbind(labeltxt.pm25,labeltxt.pmco)
+meta2 <- rbind(meta.pm25,meta.pmco,meta.no2)
+label2<- rbind(labeltxt.pm25,labeltxt.pmco,labeltxt.no2)
 is.summary2 <- c(is.summary,is.summary)
 
 
