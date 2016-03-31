@@ -57,7 +57,7 @@ is.summary.c <- c(is.summary,is.summary)
 #--------------------plotting -------------
 
 #--- multi
-forestplot(label.c,meta.c,new_page = TRUE,is.summary=is.summary2,zero =1,boxsize=.1,graph.pos=2,
+forestplot(label.c,meta.c,new_page = TRUE,is.summary=is.summary.c,zero =1,boxsize=.1,graph.pos=2,
            lwd.xaxis=2,
            txt_gp = fpTxtGp(label = gpar(cex=.75),xlab = gpar(cex = .8),ticks = gpar(cex = .5),summary = gpar(cex = .8),title = gpar(cex = .9) ),
            line.margin = .01,
