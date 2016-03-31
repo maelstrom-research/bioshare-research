@@ -31,7 +31,11 @@ meta.pm25 <- .stack.fp(gstack.pm25,fix='PM2.5')
 meta.pmco <- .stack.fp(gstack.pmco,fix='PMcoarse')
 meta.no2 <- .stack.fp(gstack.no2,fix='NO2')
 
-labeltxt.pm25 <- .label.fp(gstack.pm25,fix='PM2.5')
+#define statistics name ex: 'Odds ratio (95% CI)'
+stat.name <- 'Odds ratio (95% CI)'
+
+#only the first group or study need to define the stat otherwise it will display everywhere in the final plot
+labeltxt.pm25 <- .label.fp(gstack.pm25,fix='PM2.5',statdesc=stat.name)  #<- "stat" is defined only here the fist group in the plot
 labeltxt.pmco <- .label.fp(gstack.pmco,fix='PMcoarse')
 labeltxt.no2 <- .label.fp(gstack.no2,fix='NO2')
 
