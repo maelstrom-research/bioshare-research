@@ -8,12 +8,13 @@
 *.rda
 *.Rproj
 # RStudio files
-.Rproj.user/
 .Rproj.user
 core
 *sub*.R
 *tmp.R
-Veg-MetS-Table1-SampleCharateristics.R
+*SampleCharateristics*.R
+*basicanalyses.R
+*dany.R
 #login
 *login*
 aprh_interactionterms.R

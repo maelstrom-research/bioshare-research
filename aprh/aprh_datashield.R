@@ -65,31 +65,13 @@ datashield.symbols(opals) # check objects on server side
 #exposure effect statistics  [see data = 'D' for main analysis]
 run.model(outcome,expo,model,family = 'binomial',data,Ncases=T,pval = F, ref ='lifelines',check=F) #ref is specified here
 
-#split model run [ no need to create dummy study variable, but you need to specify the datasource] 
-run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, datasources = opals[2],check=F) #ukbiobank opals[2]
+#UKBIOBANK REGRESSION 
+run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, datasources = opals[2],check=F)
 
 
+#LIFELINES REGRESSION 
+run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, datasources = opals[1],check=F)
 
-### ------generate formula based on previously called expo, outcome, model and data.
-#formula <- run.update.formula(outcome,expo,model,data) #[ data = 'D' main analysis]
-#glm.res<-run.meta.glm(formula,family='binomial',ref='lifelines')
-#run.extract.glm.stats(glm.res)
-
-
-################# NA STATS ##########################
-
-#### create NA subset ex: NA.D (default for main analysis and for a specific model) on server side
-#this function assign NA.D.xxxx on server side and return the name of the assign NA dataframe.
-nadata <- run.NA.glm.subset(formula=formula)
-
-#check number of missing cases
-ds.dim(nadata)
-
-#### run NA stats 
-run.desc.stats('AGE_YRS',data = nadata)
-run.desc.stats('GENDER',data= nadata)
-run.desc.stats('PM_BMI_CATEGORIAL',data= nadata)
-run.desc.stats('EDU_HIGHEST_2',data= nadata)
 
 
 

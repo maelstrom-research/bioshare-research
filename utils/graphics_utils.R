@@ -93,7 +93,7 @@ library('forestplot',quietly=T)
   k.stack
 }
 
-.label.fp <- function(glm.list,digit=NULL,fix,term = NULL){
+.label.fp <- function(glm.list,digit=NULL,fix,term = NULL,statdesc=''){
   if(missing(glm.list)) stop('Please provide a valid glm result(s) list...',call.=F)
   glist <- glm.list
   
@@ -101,6 +101,7 @@ library('forestplot',quietly=T)
   
   if(missing(fix)) stop('Provide a fix name ...',call.=F)
   fix <- paste0(fix,space)
+  
   
   if(is.null(digit)){digit <- 3}
   
@@ -114,10 +115,10 @@ library('forestplot',quietly=T)
     res.all[term,]
   }
   s.list <- lapply(glist,f)
-  estim <-  Reduce(rbind,s.list)
+  estim <-  do.call(rbind,s.list)
   labels<- paste0(space,.checklbl(names(glist),literal=.outcomes.lit))
   s.stack <- cbind(labels, estim)
-  rbind(c(fix,''),s.stack)
+  rbind(c(fix,statdesc),s.stack)
 }
 
 
