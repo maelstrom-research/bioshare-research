@@ -57,7 +57,7 @@ ds_utils.env$.vectorize <- function(x,subscript,simplify = T)
   error <- F
   
   lg.char <- unlist(strsplit(logicexpr,'>|<|\\={2}|>\\=|<\\=|!\\='))
-  lg.op <- sub('\\w+(>|<|\\={2}|>\\=|<\\=|!\\=)\\d+','\\1',logicexpr)
+  lg.op <- sub('\\w+(>|<|\\={2}|>\\=|<\\=|!\\=)\\d+(\\.\\d+)?','\\1',logicexpr)
   lg.var <- lg.char[1]
   lg.th <- lg.char[2]
   
