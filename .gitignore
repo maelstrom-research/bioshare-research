@@ -10,7 +10,7 @@
 # RStudio files
 .Rproj.user
 core
-*sub*.R
+*subgrp*.R
 *tmp.R
 *SampleCharateristics*.R
 *basicanalyses.R
