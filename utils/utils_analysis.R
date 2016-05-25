@@ -51,7 +51,7 @@ source('utils/ds_utils_run_CCglmsubset.R')
 
 
 
-#############----- BASE STATS --##############################
+#############----- BASE STATS --#############################
 source('utils/ds_utils_run_table1d.R')
 source('utils/ds_utils_run_meansd.R')
 source('utils/ds_utils_run_table2d.R')
@@ -69,7 +69,7 @@ ds_utils.env$run.close<-function(all=F)
     for(obj in objs){
       obj.val<- eval(parse(text=obj))
       if (is.list(obj.val) && (class(obj.val[[1]]) == 'opal')){
-        message('Closing opal(s) server connection(s)')
+        message(cat('Closing opal(s) server connection(s)'))
         obj.opal <- obj.val
         datashield.logout(obj.opal)
         rm(list= obj,pos=search())
@@ -90,7 +90,7 @@ ds_utils.env$run.close<-function(all=F)
 
 # attach ds_utils env
 attach(ds_utils.env)
-if('ds_utils.env' %in% search()) {message('ds_utils.env is correctly loaded...')}
+if('ds_utils.env' %in% search()) {message(cat('ds_utils.env is correctly loaded...'))}
 rm(ds_utils.env)
 
 
