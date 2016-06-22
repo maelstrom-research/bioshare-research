@@ -93,8 +93,9 @@ library('forestplot',quietly=T)
   k.stack
 }
 
-.label.fp <- function(glm.list,digit=NULL,fix,term = NULL,statdesc=''){
+.label.fp <- function(glm.list,digit=NULL,fix,term = NULL,statdesc='',labeldesc=NULL){
   if(missing(glm.list)) stop('Please provide a valid glm result(s) list...',call.=F)
+  if(is.null(labeldesc)) stop('Please provide a text description for each odd ratio value to displayed. Ex. " SYM_BREATH_PRB = General breathing problems " ',call.=F)
   glist <- glm.list
   
   space <-'           '
@@ -116,7 +117,7 @@ library('forestplot',quietly=T)
   }
   s.list <- lapply(glist,f)
   estim <-  do.call(rbind,s.list)
-  labels<- paste0(space,.checklbl(names(glist),literal=.outcomes.lit))
+  labels<- paste0(space,.checklbl(names(glist),literal= labeldesc))
   s.stack <- cbind(labels, estim)
   rbind(c(fix,statdesc),s.stack)
 }
@@ -141,6 +142,25 @@ library('forestplot',quietly=T)
    'SYM_PHLEGM_DAY_FREQ' = 'Phlegm during the day (almost daily)' ,
    'SYM_SBREATH_EXT' = 'Shortness of breath at rest or walking'
 )
+
+
+#-----------------------------------
+#Read a text formatted csv file and extract mean lower upper for 
+#forest plot
+.mean_lower_upper<- function (CSV=NULL) 
+{
+  if(is.null(CSV)) stop ('Add the csv file ',call.=FALSE)
+  or_list <- strsplit(CSV[,3],'\\[|-|\\]')
+  f <- function(z) 
+  {
+    if(is.na(z) || length(z)==0 || any(grepl('odds',z,TRUE))) return (NA)
+    mean <- as.numeric(unlist(z)[1])
+    lower <- as.numeric(unlist(z)[2])
+    upper <- as.numeric(unlist(z)[3])
+    return (cbind(mean,lower,upper))
+  }
+  do.call(rbind,lapply(or_list,f))
+}
 
 
 
