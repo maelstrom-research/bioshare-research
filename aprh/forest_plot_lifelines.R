@@ -39,19 +39,20 @@ meta.no2 <- .stack.fp(gstack.no2,fix='NO2')
 
 #define statistics name ex: 'Odds ratio (95% CI)'
 stat.name <- 'Odds ratio (95% CI)'
+label_desc <- .outcomes.lit
 
 #only the first group or study need to define the stat otherwise it will display everywhere in the final plot
-labeltxt.pm25 <- .label.fp(gstack.pm25,fix='PM2.5',statdesc=stat.name)  #<- "stat" is defined only here the fist group in the plot
-labeltxt.pmco <- .label.fp(gstack.pmco,fix='PMcoarse')
-labeltxt.no2 <- .label.fp(gstack.no2,fix='NO2')
+labeltxt.pm25 <- .label.fp(gstack.pm25,fix='PM2.5',statdesc=stat.name,labeldesc=label_desc)  #<- "stat" is defined only here the fist group in the plot
+labeltxt.pmco <- .label.fp(gstack.pmco,fix='PMcoarse',labeldesc=label_desc)
+labeltxt.no2 <- .label.fp(gstack.no2,fix='NO2',labeldesc=label_desc)
 
 
 is.summary <- c(T,rep(F,nrow(meta.pm25)-1))
 
-####### combine pm2.5 and pmcoarse
+####### combine pm2.5 and pmcoarse and no2
 meta.c <- rbind(meta.pm25,meta.pmco,meta.no2)
 label.c<- rbind(labeltxt.pm25,labeltxt.pmco,labeltxt.no2)
-is.summary.c <- c(is.summary,is.summary)
+is.summary.c <- c(is.summary,is.summary,is.summary)
 
 
 #--------------------plotting -------------
