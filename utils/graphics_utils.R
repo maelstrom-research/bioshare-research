@@ -164,5 +164,16 @@ library('forestplot',quietly=T)
 
 
 
+.csv_to_text <- function(CSV)
+{
+  csvtext <- CSV[1:19,]
+  csv1 <- CSV[1:19,]
+  csv2 <- CSV[20:38,]
+  csvtext[-c(1,2),2] <- paste0(csv1[-c(1,2),2],'\n',csv2[-c(1,2),2] )
+  csvtext[-c(1,2),3] <- paste0(csv1[-c(1,2),3],'\n',csv2[-c(1,2),3] )
+  csvtext[-c(1,2),4] <- paste0(csv1[-c(1,2),4],'\n',csv2[-c(1,2),4] )
+  return(csvtext)
+}
+
 
 message('All required graphics functions are loaded...')
