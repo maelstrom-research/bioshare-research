@@ -10,10 +10,12 @@
 # RStudio files
 .Rproj.user
 core
-*sub*.R
+*subgrp*.R
 *tmp.R
 *SampleCharateristics*.R
 *basicanalyses.R
 *dany.R
 #login
 *login*
+aprh_interactionterms.R
+*.csv
