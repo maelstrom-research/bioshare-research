@@ -47,16 +47,34 @@ expo <- 'PM25_ESCAPE'
 #expo <- 'PMcoarse_ESCAPE'
 
 ####################
-outcome <- 'SYM_WHEEZ' 
-#outcome <- 'SYM_WHEEZ_NOCOLD'
-#outcome <- 'SYM_SBREATH'
+#Pooled outcomes
+#outcome <- 'SYM_WHEEZ' 
+#outcome <- 'SYM_SBREATH_EXT'
+
+###UKBB only variables (asthma symptom)
 #outcome <- 'SYM_SBREATH_WALK'
-#outcome <- 'SYM_BREATH_PRB'
+
+###Lifelines only variables
+# Asthma symptoms
+#outcome <- 'SYM_SBREATH'
+#outcome <- 'SYM_WHEEZ_NOCOLD'
+#outcome <- 'SYM_WHEEZ_SBREATH'
+#outcome <- 'SYM_SBREATH_FLAT'
+#outcome <- 'SYM_SBREATH_EXERT'
+#outcome <- 'SYM_SBREATH_NIGHT'
+#outcome <- 'SYM_SBREATH_WOKEN'
+#outcome <- 'SYM_SBREATH_NUMB'
+
+
+###COPD symptoms
 #outcome <- 'SYM_PHLEGM_UP'
 #outcome <- 'SYM_PHLEGM_UP_FREQ'
 #outcome <- 'SYM_PHLEGM_DAY'
 #outcome <- 'SYM_PHLEGM_DAY_FREQ'
-#outcome <- 'SYM_SBREATH_EXT'
+
+#Other symptoms
+#outcome <- 'SYM_BREATH_PRB'
+
 
 #pooled model to run [first create dummy study variables in server side by running run.dummy() once]
 run.dummy.study(data) #run once 
