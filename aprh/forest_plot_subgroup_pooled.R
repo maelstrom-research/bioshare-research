@@ -1,7 +1,7 @@
 #source('utils/graphics_utils.R')
 
 #read formatted csv file
-data <- read.csv('aprh/PM25Wheeze.csv',header=FALSE,colClasses = 'character') 
+data<- read.csv('aprh/PooledPMcoarse.csv',header=FALSE,colClasses = 'character') 
 csvtext <- .csv_to_text(data)
 
 MLU1 <- .mean_lower_upper(data[1:19,]) 
@@ -14,7 +14,7 @@ forestplot(csvtext, new_page = T,
            is.summary = is.summary,
            legend_args = fpLegend(pos = list(x=.5, y=.925), 
                                   gp=gpar(col="#CCCCCC", fill="#F9F9F9")),
-           legend = c("Lifelines", "Ukbiobank"),
+           legend = c("Wheeze", "Shortness of breath"),
            graph.pos=3,
            zero = 1,
            fn.ci_norm = c(fpDrawNormalCI, fpDrawCircleCI),
@@ -25,7 +25,7 @@ forestplot(csvtext, new_page = T,
            lower = cbind(MLU1[,'lower'], MLU2[,'lower']),
            upper = cbind(MLU1[,'upper'], MLU2[,'upper']),
            #clip = c(.77,1.31),
-           xticks =seq(from=.5,to=1.5,by=.25),  
+           xticks =seq(from=.75,to=1.25,by=.25),  
            col=fpColors(box=c("blue", "darkred")),
            xlab="Odd ratio",
            title = title
