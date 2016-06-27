@@ -1,7 +1,7 @@
-#source('utils/graphics_utils.R')
+source('utils/graphics_utils.R')
 
 #read formatted csv file
-pm25_wheeze <- read.csv('aprh/PM25Wheeze.csv',header=FALSE,colClasses = 'character') 
+pm25_wheeze <- read.csv('aprh/forest-plots/PM25Wheeze.csv',header=FALSE,colClasses = 'character') 
 csvtext <- .csv_to_text(pm25_wheeze)
 
 MLU1 <- .mean_lower_upper(pm25_wheeze[1:19,]) 
