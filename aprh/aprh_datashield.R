@@ -11,6 +11,13 @@ source('utils/utils_analysis.R',echo=F,print.eval=F)
 source('aprh/aprh_data.R',echo=F,print.eval=F)
 
 
+#HARMONIZE SBREATH_EXT
+ds.assign('D$SYM_SBREATH','SYM_SBREATH_EXT',datasources=opals[1])
+ds.assign('D$SYM_SBREATH_WALK','SYM_SBREATH_EXT',datasources=opals[2])
+ds.cbind(c('SYM_SBREATH_EXT','D'),newobj='D')
+run.rm('SYM_SBREATH_EXT')
+
+
 ########################     DATA THAT WILL BE USED FOR THE MAIN ANALYSIS      ############
 #specify the name (character) of the dataframe that was assigned in datashield.login ('D' by default)
 data <- 'D'
@@ -23,33 +30,31 @@ data <- 'D'
 ### model0 (unajusted)
 model <- NULL
 
-###model_1(ajusted for age,sex )                                                                                     <-
+#Model 1(ajusted for age,sex )                                                                                     <-
 model<-'AGE_YRS+GENDER'
 
-#Model 2a (adjusted for age, sex, bmi, highest level of education)                        <-
-model<-'AGE_YRS+GENDER+EDU_HIGHEST_2+PM_BMI_CATEGORIAL'
-
-#Model 2b (adjusted for age, sex, bmi, highest level of education and household income)
+#Model 2 (adjusted for age, sex, bmi, highest level of education and household income)
 model <- 'AGE_YRS+GENDER+EDU_HIGHEST_2+PM_BMI_CATEGORIAL+INCOME'
 
-# Model 3a: adjusted for age, sex, bmi, highest level of education, smoking status, and exposure to second-hand tobacco smoke  				
-model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_ALL'
-
-#Model 3b: adjusted for age, sex, bmi, highest level of education, household income, smoking status, and exposure to second-hand tobacco smoke 
+#Model 3 adjusted for age, sex, bmi, highest level of education, household income, smoking status, and exposure to second-hand tobacco smoke 
 model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_ALL+INCOME'
 
+#Model 3a aditionnaly adjusted for NO2 (for PM metrics)
+model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_ALL+INCOME+NO2_ESCAPE'
 
+#Model 3b aditionnaly adjusted for PM25 (for NO2)
+model <- 'AGE_YRS+GENDER+PM_BMI_CATEGORIAL+EDU_HIGHEST_2+SMK_STATUS+SMK_PASSIVE_ALL+INCOME+PM25_ESCAPE'
 
 #######################
 expo <- 'PM25_ESCAPE'
-#expo <- 'PM10_ESC'
-#expo <- 'NO2_ESCAPE'
-#expo <- 'PMcoarse_ESCAPE'
+expo <- 'PM10_ESC'
+expo <- 'NO2_ESCAPE'
+expo <- 'PMcoarse_ESCAPE'
 
 ####################
 #Pooled outcomes
-#outcome <- 'SYM_WHEEZ' 
-#outcome <- 'SYM_SBREATH_EXT'
+outcome <- 'SYM_WHEEZ' 
+outcome <- 'SYM_SBREATH_EXT'
 
 ###UKBB only variables (asthma symptom)
 #outcome <- 'SYM_SBREATH_WALK'
@@ -92,4 +97,39 @@ run.model(outcome,expo,model,family = 'binomial',data,Ncases=T, pval = F, dataso
 
 
 
+################# NA and CC STATS ##########################
 
+#### Build formula base on ouctom, exposure and model#####
+formula <- run.make.formula(outcome,expo,model,data)
+
+
+############ MISSING DATA ####################
+
+#### create NA subset ex: NA.D (default for main analysis and for a specific model) on server side
+#this function assign NA.D.xxxx on server side and return the name of the assign NA dataframe.
+##run.NA.glm.subset<-function(formula,glm.result,NAsubset=NULL,datasources=NULL)
+nadata <- run.NA.glm.subset(formula=formula)
+ds.colnames('NA.D')
+
+#check number of missing cases
+ds.dim(nadata)
+
+#### run NA stats 
+run.meanSd('AGE_YRS',data = nadata)
+run.desc.stats('GENDER',data= nadata)
+run.desc.stats('PM_BMI_CATEGORIAL',data= nadata)
+run.desc.stats('EDU_HIGHEST_2',data= nadata)
+
+
+########## COMPLETE CASES #################
+
+#### run.CC.glm.subset <- function(formula,glm.result,CCsubset=NULL,datasources=NULL)
+ccdata <- run.CC.glm.subset (formula=formula)
+ds.colnames('CC.D')
+
+#check number of complete cases
+ds.dim(ccdata)
+
+########Run Analyses for only complete cases in Model 3 #######
+run.dummy.study(data=ccdata)
+run.model(outcome,expo,model,family = 'binomial',data=ccdata,Ncases=T,pval = F, ref ='lifelines',check=F)
