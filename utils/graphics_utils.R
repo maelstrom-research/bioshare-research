@@ -150,10 +150,11 @@ library('forestplot',quietly=T)
 .mean_lower_upper<- function (CSV=NULL) 
 {
   if(is.null(CSV)) stop ('Add the csv file ',call.=FALSE)
+  CSV[,3] <- gsub(',','\\.',CSV[,3])
   or_list <- strsplit(CSV[,3],'\\[|-|\\]')
   f <- function(z) 
   {
-    if(is.na(z) || length(z)==0 || any(grepl('odds',z,TRUE))) return (NA)
+    if(is.na(z) || length(z)==0 || any(grepl('odds|ratios',z,TRUE))) return (NA)
     mean <- as.numeric(unlist(z)[1])
     lower <- as.numeric(unlist(z)[2])
     upper <- as.numeric(unlist(z)[3])

@@ -1,4 +1,4 @@
-#source('utils/graphics_utils.R')
+source('utils/graphics_utils.R')
 
 #read formatted csv file
 data<- read.csv('aprh/forest-plots/PooledPMcoarse.csv',header=FALSE,colClasses = 'character') 
