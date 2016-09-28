@@ -116,9 +116,9 @@ ds.dim(nadata)
 
 #### run NA stats 
 run.meanSd('AGE_YRS',data = nadata)
-run.desc.stats('GENDER',data= nadata)
-run.desc.stats('PM_BMI_CATEGORIAL',data= nadata)
-run.desc.stats('EDU_HIGHEST_2',data= nadata)
+run.table1d('GENDER',data= nadata)
+run.table1d('PM_BMI_CATEGORIAL',data= nadata)
+run.table1d('EDU_HIGHEST_2',data= nadata)
 
 
 ########## COMPLETE CASES #################
@@ -133,3 +133,13 @@ ds.dim(ccdata)
 ########Run Analyses for only complete cases in Model 3 #######
 run.dummy.study(data=ccdata)
 run.model(outcome,expo,model,family = 'binomial',data=ccdata,Ncases=T,pval = F, ref ='lifelines',check=F)
+
+
+
+############## COMPARISON OF MISSING CASES VS COMPLETE CASES IN GLM: EX FOR VARIABLES SYM_WHEEZE + PM25 + MODEL3
+formula <- run.make.formula(outcome,expo,model,data)
+# compute the complete case ID variables (ccID) for glm variables
+run.ID.glm.subset(formula,IDsubset = 'ID_Data')
+
+#then compare SYM_WHEEZE for Missing cases vs complete cases status for all the glm variables
+run.table2d(x='ccID',y='SYM_WHEEZ',data = 'ID_Data',col.percent = TRUE)
