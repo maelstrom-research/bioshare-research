@@ -10,7 +10,7 @@
 #param <datasources> (optional): the datasources (study opal infos) where to do carry the computation. If not specified it will use all server(s)
 
 
-ds_utils.env$run.ID.glm.subset<-function(formula,glm.result,IDsubset=NULL,datasources=NULL)
+ds_utils.env$run.ID.glm.subset<-function(formula,glm.result,fromVars= NULL,IDsubset=NULL,datasources=NULL)
 {
   mf <- match.call(expand.dots = FALSE)
   arg.names <- names(mf)
@@ -45,9 +45,31 @@ ds_utils.env$run.ID.glm.subset<-function(formula,glm.result,IDsubset=NULL,dataso
   datashield.assign(ds,'RD',cally)
   
   
-  # define complete cases boolean var
-  callcc<-'asFactorDS(complete.cases(RD)*1)'
+  # ----------define complete cases boolean var------------------
+  
+  if (is.null(fromVars)){ # use all the variables
+    cat('\nall variables of the model will be used to create complete.cases:"ccID"\n')
+    callcc<-'asFactorDS(complete.cases(RD)*1)'
+   
+  }else{ #use the designed variable
+    #first check that the designed var was in the model
+    fromVars <- unlist(fromVars)
+    checkfromvars <- all(idx <- fromVars %in% vars.names)
+    if(!checkfromvars) {
+      stop(paste0('Variable(s) "',paste0(fromVars[!idx],collapse = ', '), '" is(are) not in the model'),call. = FALSE)
+      callcc<-'asFactorDS(complete.cases(RD)*1)'
+    }else{
+      cat(paste0('\nVariable(s) "', paste0(fromVars,collapse = ' , '),'" of the model will be used to created complete.cases:"ccID"\n'))
+      cbindtxt <- paste0('cbind(',paste0(paste0('RD$',fromVars),collapse = ','),')')
+      callcc<- paste0('asFactorDS(complete.cases(',cbindtxt,')*1)')
+    }
+  }
+  
+  #then compute ccID
   datashield.assign(ds,'ccID',as.symbol(callcc))
+  
+  
+  
   
   
   #define new df RD with cc variable
@@ -61,7 +83,7 @@ ds_utils.env$run.ID.glm.subset<-function(formula,glm.result,IDsubset=NULL,dataso
   run.rm(to_rm,datasources=ds)
   
   #info to user
-  cat(paste0("You may check the assigned ",IDsubset," dataframe with the following datashield commands: 
+  cat(paste0("\nYou may check the assigned ",IDsubset," dataframe with the following datashield commands: 
    run.isAssigned('",IDsubset,"'), ds.colnames('",IDsubset,"') AND ds.dim('",IDsubset,"')")) 
   
   return(invisible(IDsubset))
