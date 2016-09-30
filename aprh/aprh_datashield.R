@@ -138,8 +138,8 @@ run.model(outcome,expo,model,family = 'binomial',data=ccdata,Ncases=T,pval = F, 
 
 ############## COMPARISON OF MISSING CASES VS COMPLETE CASES IN GLM: EX FOR VARIABLES SYM_WHEEZE + PM25 + MODEL3
 formula <- run.make.formula(outcome,expo,model,data)
-# compute the complete case ID variables (ccID) for glm variables
-run.ID.glm.subset(formula,IDsubset = 'ID_Data')
+# compute the complete case ID variables (ccID) FROM SYM_WHEEZ  in the model
+run.ID.glm.subset(formula,IDsubset = 'ID_Data',fromVars = 'SYM_WHEEZ')
 
 #then compare SYM_WHEEZE for Missing cases vs complete cases status for all the glm variables
 run.table2d(x='ccID',y='SYM_WHEEZ',data = 'ID_Data',col.percent = TRUE)
