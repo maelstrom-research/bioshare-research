@@ -79,8 +79,8 @@ ds_utils.env$run.ID.glm.subset<-function(formula,glm.result,fromVars= NULL,IDsub
   
   
   #clean server workspace
-  #to_rm <- c("ccID","complt","cs","dt","lg" , "rs", "th","varname","RD")
-  #run.rm(to_rm,datasources=ds)
+  to_rm <- c("ccID","complt","cs","dt","lg" , "rs", "th","varname","RD")
+  run.rm(to_rm,datasources=ds)
   
   #info to user
   cat(paste0("\nYou may check the assigned ",IDsubset," dataframe with the following datashield commands: 
