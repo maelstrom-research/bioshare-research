@@ -19,5 +19,4 @@ core
 *login*
 aprh_interactionterms.R
 *.csv
-subgroup_analysis.R
 *missingdata.R
